@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>HLR i FAR</title>
+<meta name="description" content="Koordinering av HLR-opplæring og utstyr for Avdeling for farmakologi (FAR), OUS." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❤️</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ============ TOPBAR ============ -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="26" height="26">
+          <path d="M24 41.5s-16.5-9.9-20.6-20C.6 14.6 3.6 7 11 5.6c4.6-.9 8.9 1.2 11.4 4.8l1.6 2.3 1.6-2.3C28 5.7 32.3 3.6 36.9 4.6 44.3 6 47.3 13.6 44.6 21.5c-4.1 10.1-20.6 20-20.6 20z" fill="var(--accent)"/>
+          <path d="M4 24h8l3-8 5 16 4-12 3 6h17" fill="none" stroke="var(--accent-ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-title" data-i18n="appTitle">HLR i FAR</span>
+        <span class="brand-subtitle" data-i18n="appSubtitle">Koordinering av opplæring og utstyr</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="langToggle" class="pill-btn" type="button" aria-label="Bytt språk">
+        <span data-i18n-lang-current>NO</span>
+      </button>
+      <button id="themeToggle" class="pill-btn icon-btn" type="button" aria-label="Bytt tema">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.2"/><g stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="4.9" y1="4.9" x2="6.6" y2="6.6"/><line x1="17.4" y1="17.4" x2="19.1" y2="19.1"/><line x1="4.9" y1="19.1" x2="6.6" y2="17.4"/><line x1="17.4" y1="6.6" x2="19.1" y2="4.9"/></g></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="18" height="18"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <!-- ============ SIDE / BOTTOM NAV ============ -->
+    <nav class="nav" aria-label="Hovednavigasjon">
+      <button class="nav-item is-active" data-view="oversikt" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l9 6.2V21H3V9.2z"/><path d="M9 21v-7h6v7"/></svg>
+        <span data-i18n="navOverview">Oversikt</span>
+      </button>
+      <button class="nav-item" data-view="grupper" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c.6-3.6 3-5.6 5.5-5.6s4.9 2 5.5 5.6"/><path d="M14.8 20c.5-2.9 2.2-4.6 4.2-4.6 1.7 0 3.2 1.1 3.9 3"/></svg>
+        <span data-i18n="navGroups">Grupper</span>
+      </button>
+      <button class="nav-item" data-view="logg" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span data-i18n="navLog">Opplæringslogg</span>
+      </button>
+      <button class="nav-item" data-view="guide" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 6.5c-1.6-1.3-3.8-2-6.5-2v13.5c2.7 0 4.9.7 6.5 2 1.6-1.3 3.8-2 6.5-2V4.5c-2.7 0-4.9.7-6.5 2z"/><line x1="12" y1="6.5" x2="12" y2="18"/></svg>
+        <span data-i18n="navGuide">Hurtigstart</span>
+      </button>
+    </nav>
+
+    <!-- ============ MAIN CONTENT ============ -->
+    <main class="content">
+
+      <div id="connBanner" class="banner banner-warn" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3.5 22 20H2z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17" r="1"/></svg>
+        <span id="connBannerText">Denne appen er ikke koblet til en database ennå. Se OPPSETT.md i prosjektet for å komme i gang (tar ca. 10 minutter).</span>
+      </div>
+
+      <!-- ---------- OVERSIKT ---------- -->
+      <section class="view is-active" id="view-oversikt">
+        <div class="view-head">
+          <h1 data-i18n="overviewTitle">Utstyrsstatus</h1>
+          <p class="view-desc" data-i18n="overviewDesc">Dette er stedet der vi holder styr på hvor utstyret befinner seg akkurat nå.</p>
+        </div>
+
+        <div class="card-grid">
+          <div class="card status-card" id="card-miniAnne">
+            <div class="status-card-head">
+              <span class="status-icon" aria-hidden="true">🎒</span>
+              <h2 data-i18n="miniAnneTitle">Mini-Anne-bagen</h2>
+            </div>
+            <p class="status-label" data-i18n="miniAnneLabel">Hvor befinner bagen seg nå?</p>
+            <p class="status-value" id="miniAnneLocation">–</p>
+            <input class="edit-field" id="miniAnneLocationInput" type="text" hidden />
+            <div class="status-meta" id="miniAnneMeta"></div>
+            <div class="card-actions">
+              <button class="btn btn-ghost" data-edit="miniAnne" type="button" data-i18n="edit">Rediger</button>
+              <button class="btn btn-primary" data-save="miniAnne" type="button" hidden data-i18n="save">Lagre</button>
+              <button class="btn btn-ghost" data-cancel="miniAnne" type="button" hidden data-i18n="cancel">Avbryt</button>
+            </div>
+          </div>
+
+          <div class="card status-card" id="card-defib">
+            <div class="status-card-head">
+              <span class="status-icon" aria-hidden="true">⚡</span>
+              <h2 data-i18n="defibTitle">Hjertestarter</h2>
+            </div>
+            <p class="status-label" data-i18n="defibLabel">Følger hjertestarteren med bagen?</p>
+            <p class="status-value">
+              <span class="badge" id="defibBadge">–</span>
+            </p>
+            <div class="edit-field" id="defibToggleWrap" hidden>
+              <label class="switch-row">
+                <span data-i18n="defibYes">Ja, den er med</span>
+                <input type="checkbox" id="defibToggle" />
+              </label>
+            </div>
+            <div class="status-meta" id="defibMeta"></div>
+            <div class="card-actions">
+              <button class="btn btn-ghost" data-edit="defib" type="button" data-i18n="edit">Rediger</button>
+              <button class="btn btn-primary" data-save="defib" type="button" hidden data-i18n="save">Lagre</button>
+              <button class="btn btn-ghost" data-cancel="defib" type="button" hidden data-i18n="cancel">Avbryt</button>
+            </div>
+          </div>
+        </div>
+
+        <p class="fine-print" data-i18n="statusFinePrint">Endringer lagres for alle med lenken med det samme du trykker «Lagre».</p>
+      </section>
+
+      <!-- ---------- GRUPPER ---------- -->
+      <section class="view" id="view-grupper">
+        <div class="view-head">
+          <h1 data-i18n="groupsTitle">Grupper som skal ha opplæring</h1>
+          <p class="view-desc" data-i18n="groupsDesc">Grunnleggende informasjon om hver gruppe: hvor de holder til, og hvor nærmeste hjertestarter er.</p>
+        </div>
+        <div class="card-grid" id="groupsGrid"></div>
+        <button class="btn btn-outline add-btn" id="addGroupBtn" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span data-i18n="addGroup">Legg til gruppe</span>
+        </button>
+      </section>
+
+      <!-- ---------- LOGG ---------- -->
+      <section class="view" id="view-logg">
+        <div class="view-head view-head-row">
+          <div>
+            <h1 data-i18n="logTitle">Gjennomført opplæring</h1>
+            <p class="view-desc" data-i18n="logDesc">Loggfør hver gjennomførte økt, så vi har oversikt over hva som er gjort.</p>
+          </div>
+          <button class="btn btn-primary" id="addLogBtn" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span data-i18n="addLog">Registrer økt</span>
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th data-i18n="colDate">Dato</th>
+                <th data-i18n="colGroup">Gruppe / seksjon</th>
+                <th data-i18n="colParticipants">Deltakere</th>
+                <th data-i18n="colCoordinator">Koordinator</th>
+                <th data-i18n="colComment">Kommentar</th>
+                <th aria-hidden="true"></th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+          <p class="empty-state" id="logEmptyState" hidden data-i18n="logEmpty">Ingen økter registrert ennå. Trykk «Registrer økt» for å legge til den første.</p>
+        </div>
+      </section>
+
+      <!-- ---------- GUIDE ---------- -->
+      <section class="view" id="view-guide">
+        <div class="view-head">
+          <h1 data-i18n="guideTitle">HLR hurtigstart-guide</h1>
+          <p class="view-desc" data-i18n="guideDesc">Alt en koordinator trenger å huske på — fra innkalling til opprydding.</p>
+        </div>
+        <div class="accordion" id="guideAccordion"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============ MODAL: add/edit group ============ -->
+<div class="modal-overlay" id="groupModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="groupModalTitle">
+    <h2 id="groupModalTitle" data-i18n="groupModalTitleAdd">Ny gruppe</h2>
+    <form id="groupForm">
+      <label class="field">
+        <span data-i18n="fieldGroupName">Gruppenavn</span>
+        <input type="text" id="groupNameInput" required />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldLocation">Lokasjon</span>
+        <input type="text" id="groupLocationInput" required />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldNearestDefib">Nærmeste hjertestarter</span>
+        <textarea id="groupDefibInput" rows="3"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="deleteGroupBtn" hidden data-i18n="delete">Slett</button>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelGroupBtn" data-i18n="cancel">Avbryt</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: add training log entry ============ -->
+<div class="modal-overlay" id="logModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="logModalTitle">
+    <h2 id="logModalTitle" data-i18n="logModalTitle">Registrer gjennomført opplæring</h2>
+    <form id="logForm">
+      <label class="field">
+        <span data-i18n="fieldDate">Dato</span>
+        <input type="date" id="logDateInput" required />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldGroupOrSection">Gruppe / seksjon</span>
+        <input type="text" id="logGroupInput" required placeholder="F.eks. RELIS, KLF-UL, NLD …" />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldParticipants">Antall deltakere</span>
+        <input type="number" id="logParticipantsInput" min="0" step="1" />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldCoordinatorName">Utført ved (koordinator)</span>
+        <input type="text" id="logCoordinatorInput" placeholder="Navn / initialer" />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldComment">Kommentar / forbedring</span>
+        <textarea id="logCommentInput" rows="3"></textarea>
+      </label>
+      <div class="modal-actions">
+        <div></div>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelLogBtn" data-i18n="cancel">Avbryt</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<!-- Firebase (compat SDK — enkleste API-form, se firebase-config.js) -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

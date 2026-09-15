@@ -1,0 +1,16 @@
+// Sikkerhetsregler for Firestore-databasen til HLR i FAR.
+//
+// Lim inn dette under Firestore Database -> Rules i Firebase-konsollen.
+// Se OPPSETT.md, steg 4, for full forklaring.
+//
+// Alle som har lenken til appen logges automatisk inn anonymt (se
+// OPPSETT.md steg 3), og oppfyller dermed "request.auth != null" - i
+// praksis betyr dette "alle med lenken kan lese og skrive".
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
