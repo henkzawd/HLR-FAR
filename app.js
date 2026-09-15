@@ -11,6 +11,7 @@
       navOverview: "Oversikt",
       navGroups: "Grupper",
       navLog: "Opplæringslogg",
+      navDeficiencies: "Mangler",
       navGuide: "Hurtigstart",
       bannerNoDb: "Denne appen er ikke koblet til en database ennå. Se OPPSETT.md i prosjektet for å komme i gang (tar ca. 10 minutter).",
       bannerAuthFailed: "Fikk ikke logget inn mot databasen. Sjekk at «Anonym innlogging» er skrudd på under Authentication i Firebase-konsollen (se OPPSETT.md, steg 3).",
@@ -24,6 +25,7 @@
       save: "Lagre",
       cancel: "Avbryt",
       delete: "Slett",
+      fieldYourName: "Ditt navn",
       defibTitle: "Hjertestarter",
       defibLabel: "Følger hjertestarteren med bagen?",
       defibYes: "Ja, den er med",
@@ -47,6 +49,16 @@
       colCoordinator: "Koordinator",
       colComment: "Kommentar",
       logEmpty: "Ingen økter registrert ennå. Trykk «Registrer økt» for å legge til den første.",
+      fieldGroupOrSectionPlaceholder: "Velg gruppe …",
+      deficienciesTitle: "Mangler",
+      deficienciesDesc: "Registrer ting som må fikses eller bestilles – f.eks. en sprukket dukke, eller at det må bestilles flere ansiktsduker eller spritservietter.",
+      addDeficiency: "Registrer mangel",
+      deficiencyModalTitle: "Registrer mangel",
+      fieldDeficiencyText: "Hva mangler / må fikses?",
+      deficiencyEmpty: "Ingen mangler registrert. Bra jobba! Trykk «Registrer mangel» hvis noe må fikses eller bestilles.",
+      deficiencyMarkResolved: "Merk som løst",
+      deficiencyMarkUnresolved: "Merk som uløst",
+      confirmDeleteDeficiency: "Slette denne mangelen? Dette kan ikke angres.",
       guideTitle: "HLR hurtigstart-guide",
       guideDesc: "Alt en koordinator trenger å huske på — fra innkalling til opprydding.",
       groupModalTitleAdd: "Ny gruppe",
@@ -109,6 +121,7 @@
       navOverview: "Overview",
       navGroups: "Groups",
       navLog: "Training log",
+      navDeficiencies: "Issues",
       navGuide: "Quickstart",
       bannerNoDb: "This app isn't connected to a database yet. See OPPSETT.md in the project to get started (about 10 minutes).",
       bannerAuthFailed: "Could not sign in to the database. Check that \"Anonymous sign-in\" is enabled under Authentication in the Firebase console (see OPPSETT.md, step 3).",
@@ -122,6 +135,7 @@
       save: "Save",
       cancel: "Cancel",
       delete: "Delete",
+      fieldYourName: "Your name",
       defibTitle: "Defibrillator",
       defibLabel: "Is the defibrillator with the bag?",
       defibYes: "Yes, it's with the bag",
@@ -145,6 +159,16 @@
       colCoordinator: "Coordinator",
       colComment: "Comment",
       logEmpty: "No sessions logged yet. Press “Log a session” to add the first one.",
+      fieldGroupOrSectionPlaceholder: "Select group …",
+      deficienciesTitle: "Issues",
+      deficienciesDesc: "Log things that need fixing or ordering – e.g. a torn doll, or that you need to order more face shields or disinfectant wipes.",
+      addDeficiency: "Log an issue",
+      deficiencyModalTitle: "Log an issue",
+      fieldDeficiencyText: "What's missing / needs fixing?",
+      deficiencyEmpty: "No issues logged. Nice! Press “Log an issue” if something needs fixing or ordering.",
+      deficiencyMarkResolved: "Mark as resolved",
+      deficiencyMarkUnresolved: "Mark as unresolved",
+      confirmDeleteDeficiency: "Delete this issue? This cannot be undone.",
       guideTitle: "CPR quickstart guide",
       guideDesc: "Everything a coordinator needs to remember — from booking to cleanup.",
       groupModalTitleAdd: "New group",
@@ -211,6 +235,14 @@
     { id: "rh", name: "RH", location: "Rikshospitalet", defib: "", order: 5 },
   ];
 
+  var GROUP_PALETTE = ["#4C7CE0", "#2FA6A0", "#8B6FD1", "#3FA65C", "#4FA8D8", "#6C6FCF", "#4CA6C7", "#7C9A3F"];
+  function groupColor(g) {
+    var str = (g && (g.id || g.name)) || "";
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) { hash = (hash * 31 + str.charCodeAt(i)) >>> 0; }
+    return GROUP_PALETTE[hash % GROUP_PALETTE.length];
+  }
+
   /* ============================================================
      1. TILSTAND
      ============================================================ */
@@ -222,6 +254,7 @@
     status: null,
     groups: [],
     log: [],
+    deficiencies: [],
     editingMiniAnne: false,
     editingDefib: false,
     openGroupId: null, // null = ny gruppe, ellers id for redigering
@@ -315,6 +348,9 @@
     $all("[data-i18n]").forEach(function (el) {
       el.textContent = t(el.getAttribute("data-i18n"));
     });
+    $all("[data-i18n-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
     $("[data-i18n-lang-current]").textContent = state.lang.toUpperCase();
     document.documentElement.lang = state.lang;
     if (state.bannerKey) {
@@ -343,7 +379,7 @@
 
     if (!state.editingMiniAnne) {
       $("#miniAnneLocation").textContent = s.miniAnneLocation ? s.miniAnneLocation : t("miniAnneNotSet");
-      $("#miniAnneMeta").textContent = t("lastUpdated") + ": " + (s.miniAnneUpdatedAt ? formatDateTime(s.miniAnneUpdatedAt) : t("neverRegistered"));
+      $("#miniAnneMeta").textContent = t("lastUpdated") + ": " + (s.miniAnneUpdatedAt ? formatDateTime(s.miniAnneUpdatedAt) : t("neverRegistered")) + (s.miniAnneUpdatedBy ? " · " + s.miniAnneUpdatedBy : "");
     }
 
     if (!state.editingDefib) {
@@ -355,7 +391,7 @@
         badge.textContent = t("dash");
         badge.className = "badge badge-neutral";
       }
-      $("#defibMeta").textContent = t("lastUpdated") + ": " + (s.defibUpdatedAt ? formatDateTime(s.defibUpdatedAt) : t("neverRegistered"));
+      $("#defibMeta").textContent = t("lastUpdated") + ": " + (s.defibUpdatedAt ? formatDateTime(s.defibUpdatedAt) : t("neverRegistered")) + (s.defibUpdatedBy ? " · " + s.defibUpdatedBy : "");
     }
   }
 
@@ -365,12 +401,16 @@
     input.value = (state.status && state.status.miniAnneLocation) || "";
     input.hidden = false;
     $("#miniAnneLocation").hidden = true;
+    var byInput = $("#miniAnneByInput");
+    byInput.value = (state.status && state.status.miniAnneUpdatedBy) || "";
+    byInput.hidden = false;
     toggleCardButtons("miniAnne", true);
     input.focus();
   }
   function exitEditMiniAnne() {
     state.editingMiniAnne = false;
     $("#miniAnneLocationInput").hidden = true;
+    $("#miniAnneByInput").hidden = true;
     $("#miniAnneLocation").hidden = false;
     toggleCardButtons("miniAnne", false);
     renderStatus();
@@ -378,6 +418,7 @@
   function enterEditDefib() {
     state.editingDefib = true;
     $("#defibToggle").checked = !!(state.status && state.status.defibWithBag);
+    $("#defibByInput").value = (state.status && state.status.defibUpdatedBy) || "";
     $("#defibToggleWrap").hidden = false;
     toggleCardButtons("defib", true);
   }
@@ -397,9 +438,10 @@
   function saveMiniAnne() {
     if (!requireDb()) return;
     var value = $("#miniAnneLocationInput").value.trim();
+    var by = $("#miniAnneByInput").value.trim();
     statusDocRef()
       .set(
-        { miniAnneLocation: value, miniAnneUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+        { miniAnneLocation: value, miniAnneUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(), miniAnneUpdatedBy: by },
         { merge: true }
       )
       .then(function () { exitEditMiniAnne(); toast(t("toastSaved")); })
@@ -408,9 +450,10 @@
   function saveDefib() {
     if (!requireDb()) return;
     var value = $("#defibToggle").checked;
+    var by = $("#defibByInput").value.trim();
     statusDocRef()
       .set(
-        { defibWithBag: value, defibUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+        { defibWithBag: value, defibUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(), defibUpdatedBy: by },
         { merge: true }
       )
       .then(function () { exitEditDefib(); toast(t("toastSaved")); })
@@ -428,13 +471,15 @@
       var card = document.createElement("div");
       card.className = "card group-card";
       card.setAttribute("data-group-id", g.id);
+      card.style.setProperty("--gc", groupColor(g));
       card.innerHTML =
-        '<div class="group-name">' + esc(g.name) + "</div>" +
+        '<div class="group-name"><span class="group-dot"></span>' + esc(g.name) + "</div>" +
         '<div class="group-row"><span class="row-label">' + esc(t("rowLocation")) + '</span><span class="row-value">' + esc(g.location || t("dash")) + "</span></div>" +
         '<div class="group-row"><span class="row-label">' + esc(t("rowDefib")) + '</span><span class="row-value">' + esc(g.defib || t("noDefibInfo")) + "</span></div>";
       card.addEventListener("click", function () { openGroupModal(g.id); });
       grid.appendChild(card);
     });
+    renderLogGroupPicker();
   }
 
   function openGroupModal(id) {
@@ -489,9 +534,13 @@
 
     rows.forEach(function (entry) {
       var tr = document.createElement("tr");
+      var matchedGroup = entry.group ? state.groups.find(function (x) { return x.name === entry.group; }) : null;
+      var groupCell = matchedGroup
+        ? '<span class="group-dot" style="--gc:' + groupColor(matchedGroup) + '"></span>' + esc(entry.group)
+        : esc(entry.group || t("dash"));
       tr.innerHTML =
         '<td data-label="' + esc(t("colDate")) + '">' + esc(formatDate(entry.date)) + "</td>" +
-        '<td data-label="' + esc(t("colGroup")) + '">' + esc(entry.group || t("dash")) + "</td>" +
+        '<td data-label="' + esc(t("colGroup")) + '">' + groupCell + "</td>" +
         '<td data-label="' + esc(t("colParticipants")) + '">' + (entry.participants != null ? esc(entry.participants) : t("dash")) + "</td>" +
         '<td data-label="' + esc(t("colCoordinator")) + '">' + esc(entry.coordinator || t("dash")) + "</td>" +
         '<td class="comment-cell" data-label="' + esc(t("colComment")) + '">' + esc(entry.comment || t("dash")) + "</td>" +
@@ -503,21 +552,62 @@
     });
   }
 
+  function renderLogGroupPicker() {
+    var menu = $("#logGroupPickerMenu");
+    if (!menu) return;
+    menu.innerHTML = "";
+    var groups = state.groups.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
+    if (groups.length === 0) {
+      var fallback = document.createElement("input");
+      fallback.type = "text";
+      fallback.className = "group-picker-fallback-input";
+      fallback.setAttribute("data-i18n-placeholder", "fieldGroupOrSection");
+      fallback.placeholder = t("fieldGroupOrSection");
+      fallback.value = $("#logGroupInput").value || "";
+      fallback.addEventListener("input", function () { setLogGroupValue(fallback.value, null); });
+      menu.appendChild(fallback);
+      return;
+    }
+    groups.forEach(function (g) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "group-picker-item";
+      btn.innerHTML = '<span class="group-dot" style="--gc:' + groupColor(g) + '"></span><span>' + esc(g.name) + "</span>";
+      btn.addEventListener("click", function () {
+        setLogGroupValue(g.name, g);
+        $("#logGroupPicker").removeAttribute("open");
+      });
+      menu.appendChild(btn);
+    });
+  }
+  function setLogGroupValue(name, group) {
+    $("#logGroupInput").value = name;
+    var summary = $("#logGroupPickerSummary");
+    if (name) {
+      summary.innerHTML = '<span class="group-dot" style="--gc:' + (group ? groupColor(group) : "var(--text-muted)") + '"></span><span>' + esc(name) + "</span>";
+    } else {
+      summary.innerHTML = '<span class="group-picker-placeholder">' + esc(t("fieldGroupOrSectionPlaceholder")) + "</span>";
+    }
+  }
+
   function openLogModal() {
     $("#logForm").reset();
     $("#logDateInput").value = new Date().toISOString().slice(0, 10);
+    setLogGroupValue("", null);
+    $("#logGroupPicker").removeAttribute("open");
     $("#logModalOverlay").hidden = false;
-    $("#logGroupInput").focus();
   }
   function closeLogModal() { $("#logModalOverlay").hidden = true; }
 
   function submitLogForm(ev) {
     ev.preventDefault();
     if (!requireDb()) return;
+    var groupValue = $("#logGroupInput").value.trim();
+    if (!groupValue) { $("#logGroupPicker").setAttribute("open", ""); return; }
     var participantsRaw = $("#logParticipantsInput").value;
     var data = {
       date: $("#logDateInput").value,
-      group: $("#logGroupInput").value.trim(),
+      group: groupValue,
       participants: participantsRaw === "" ? null : Number(participantsRaw),
       coordinator: $("#logCoordinatorInput").value.trim(),
       comment: $("#logCommentInput").value.trim(),
@@ -529,6 +619,76 @@
     if (!requireDb()) return;
     if (!confirm(t("confirmDeleteLog"))) return;
     logCol().doc(id).delete().then(function () { toast(t("toastDeleted")); }).catch(onDbError);
+  }
+
+  /* ============================================================
+     8b. RENDER: MANGLER
+     ============================================================ */
+  function renderDeficiencies() {
+    var list = $("#deficiencyList");
+    list.innerHTML = "";
+    var items = state.deficiencies.slice().sort(function (a, b) {
+      if (!!a.resolved !== !!b.resolved) return a.resolved ? 1 : -1;
+      return (b.createdAtMs || 0) - (a.createdAtMs || 0);
+    });
+    $("#deficiencyEmptyState").hidden = items.length > 0;
+    list.hidden = items.length === 0;
+
+    items.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "deficiency-row" + (item.resolved ? " is-resolved" : "");
+      row.innerHTML =
+        '<label class="deficiency-check">' +
+        '<input type="checkbox" ' + (item.resolved ? "checked " : "") + 'aria-label="' + esc(item.resolved ? t("deficiencyMarkUnresolved") : t("deficiencyMarkResolved")) + '" />' +
+        "</label>" +
+        '<span class="deficiency-text">' + esc(item.text) + "</span>" +
+        '<button class="row-delete" type="button" aria-label="' + esc(t("delete")) + '">' +
+        '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>' +
+        "</button>";
+      $("input[type=checkbox]", row).addEventListener("change", function (ev) { toggleDeficiencyResolved(item.id, ev.target.checked); });
+      $(".row-delete", row).addEventListener("click", function () { deleteDeficiency(item.id); });
+      list.appendChild(row);
+    });
+
+    updateDeficienciesBadge();
+  }
+
+  function updateDeficienciesBadge() {
+    var count = state.deficiencies.filter(function (d) { return !d.resolved; }).length;
+    var badge = $("#deficienciesBadge");
+    badge.textContent = String(count);
+    badge.hidden = count === 0;
+  }
+
+  function openDeficiencyModal() {
+    $("#deficiencyForm").reset();
+    $("#deficiencyModalOverlay").hidden = false;
+    $("#deficiencyTextInput").focus();
+  }
+  function closeDeficiencyModal() { $("#deficiencyModalOverlay").hidden = true; }
+
+  function submitDeficiencyForm(ev) {
+    ev.preventDefault();
+    if (!requireDb()) return;
+    var text = $("#deficiencyTextInput").value.trim();
+    if (!text) return;
+    deficienciesCol().add({
+      text: text,
+      resolved: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }).then(function () { closeDeficiencyModal(); toast(t("toastSaved")); }).catch(onDbError);
+  }
+  function toggleDeficiencyResolved(id, resolved) {
+    if (!requireDb()) return;
+    deficienciesCol().doc(id).set(
+      { resolved: resolved, resolvedAt: resolved ? firebase.firestore.FieldValue.serverTimestamp() : null },
+      { merge: true }
+    ).catch(onDbError);
+  }
+  function deleteDeficiency(id) {
+    if (!requireDb()) return;
+    if (!confirm(t("confirmDeleteDeficiency"))) return;
+    deficienciesCol().doc(id).delete().then(function () { toast(t("toastDeleted")); }).catch(onDbError);
   }
 
   /* ============================================================
@@ -564,6 +724,7 @@
   function statusDocRef() { return state.db.collection("status").doc("current"); }
   function groupsCol() { return state.db.collection("groups"); }
   function logCol() { return state.db.collection("trainingLog"); }
+  function deficienciesCol() { return state.db.collection("deficiencies"); }
 
   function requireDb() {
     if (state.dbReady) return true;
@@ -609,6 +770,7 @@
       subscribeStatus();
       subscribeGroups();
       subscribeLog();
+      subscribeDeficiencies();
     });
   }
 
@@ -634,8 +796,10 @@
       state.status = {
         miniAnneLocation: data.miniAnneLocation || "",
         miniAnneUpdatedAt: data.miniAnneUpdatedAt && data.miniAnneUpdatedAt.toDate ? data.miniAnneUpdatedAt.toDate() : null,
+        miniAnneUpdatedBy: data.miniAnneUpdatedBy || "",
         defibWithBag: typeof data.defibWithBag === "boolean" ? data.defibWithBag : null,
         defibUpdatedAt: data.defibUpdatedAt && data.defibUpdatedAt.toDate ? data.defibUpdatedAt.toDate() : null,
+        defibUpdatedBy: data.defibUpdatedBy || "",
       };
       renderStatus();
     }, function (err) {
@@ -664,6 +828,24 @@
     });
   }
 
+  function subscribeDeficiencies() {
+    deficienciesCol().onSnapshot(function (snap) {
+      state.deficiencies = snap.docs.map(function (d) {
+        var data = d.data();
+        return {
+          id: d.id,
+          text: data.text || "",
+          resolved: !!data.resolved,
+          createdAtMs: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().getTime() : 0,
+        };
+      });
+      renderDeficiencies();
+    }, function (err) {
+      console.error(err);
+      showBanner("bannerPermission");
+    });
+  }
+
   /* ============================================================
      11. OPPSTART
      ============================================================ */
@@ -672,6 +854,7 @@
     renderStatus();
     renderGroups();
     renderLog();
+    renderDeficiencies();
     renderGuide();
   }
 
@@ -707,8 +890,13 @@
     $("#cancelLogBtn").addEventListener("click", closeLogModal);
     $("#logModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeLogModal(); });
 
+    $("#addDeficiencyBtn").addEventListener("click", openDeficiencyModal);
+    $("#deficiencyForm").addEventListener("submit", submitDeficiencyForm);
+    $("#cancelDeficiencyBtn").addEventListener("click", closeDeficiencyModal);
+    $("#deficiencyModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeDeficiencyModal(); });
+
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape") { closeGroupModal(); closeLogModal(); }
+      if (ev.key === "Escape") { closeGroupModal(); closeLogModal(); closeDeficiencyModal(); }
     });
   }
 

@@ -170,6 +170,22 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; }
 .nav-item:hover { background: var(--surface-2); color: var(--text); }
 .nav-item.is-active { background: var(--accent); color: var(--accent-ink); }
 .nav-item.is-active svg { stroke: var(--accent-ink); }
+.nav-item { position: relative; }
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--warn);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.nav-item.is-active .nav-badge { background: var(--accent-ink); color: var(--accent); }
 
 .content {
   flex: 1;
@@ -257,15 +273,85 @@ input.edit-field, textarea.edit-field {
 .fine-print { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; }
 
 /* Group cards */
-.group-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: border-color 0.15s ease, transform 0.1s ease; }
-.group-card:hover { border-color: var(--accent); }
+.group-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; border-left: 3px solid var(--gc, var(--border)); transition: border-color 0.15s ease, transform 0.1s ease; }
+.group-card:hover { border-color: var(--gc, var(--accent)); }
 .group-card:active { transform: scale(0.99); }
-.group-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.group-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
 .group-row { display: flex; gap: 8px; font-size: 13px; }
 .group-row .row-label { color: var(--text-muted); flex: none; width: 92px; }
 .group-row .row-value { color: var(--text); }
 
+.group-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--gc, var(--text-muted)); }
+.log-table .group-dot { margin-right: 7px; vertical-align: middle; }
+
 .add-btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Group picker (Details-meny for gruppe/seksjon i loggen) */
+.group-picker { position: relative; }
+.group-picker-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+}
+.group-picker-summary::-webkit-details-marker { display: none; }
+.group-picker-summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-right: 1.8px solid var(--text-muted);
+  border-bottom: 1.8px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+.group-picker[open] .group-picker-summary::after { transform: rotate(-135deg); }
+.group-picker-placeholder { color: var(--text-muted); }
+.group-picker-menu {
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.group-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: none;
+  background: none;
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.group-picker-item:hover { background: var(--surface-2); }
+.group-picker-fallback-input {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+}
 
 /* =========================================================
    Buttons
@@ -315,6 +401,25 @@ input.edit-field, textarea.edit-field {
   .log-table td:first-child::before { margin-top: 0; }
   .log-table .row-delete-cell { text-align: right; }
 }
+
+/* =========================================================
+   Mangler (deficiencies)
+   ========================================================= */
+.deficiency-list { display: flex; flex-direction: column; gap: 8px; }
+.deficiency-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.deficiency-check { display: flex; }
+.deficiency-check input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); cursor: pointer; }
+.deficiency-text { flex: 1; font-size: 14px; }
+.deficiency-row.is-resolved { opacity: 0.55; }
+.deficiency-row.is-resolved .deficiency-text { text-decoration: line-through; color: var(--text-muted); }
 
 /* =========================================================
    Accordion (guide)
@@ -420,6 +525,7 @@ input.edit-field, textarea.edit-field {
     z-index: 15;
   }
   .nav-item { flex-direction: column; gap: 3px; font-size: 10.5px; padding: 6px 4px; flex: 1; align-items: center; }
+  .nav-item .nav-badge { position: absolute; top: 2px; right: calc(50% - 22px); }
   .content { order: 1; padding: 20px 16px 24px; }
   .brand-subtitle { display: none; }
 }
