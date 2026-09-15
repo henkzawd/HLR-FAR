@@ -276,13 +276,30 @@ input.edit-field, textarea.edit-field {
 .group-card { display: flex; flex-direction: column; gap: 8px; cursor: pointer; border-left: 3px solid var(--gc, var(--border)); transition: border-color 0.15s ease, transform 0.1s ease; }
 .group-card:hover { border-color: var(--gc, var(--accent)); }
 .group-card:active { transform: scale(0.99); }
-.group-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+.group-name { font-family: var(--font-display); font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .group-row { display: flex; gap: 8px; font-size: 13px; }
 .group-row .row-label { color: var(--text-muted); flex: none; width: 92px; }
 .group-row .row-value { color: var(--text); }
 
-.group-dot { display: inline-block; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--gc, var(--text-muted)); }
-.log-table .group-dot { margin-right: 7px; vertical-align: middle; }
+.group-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  background: var(--gc, var(--text-muted));
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  padding: 4px 8px;
+  min-width: 34px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.group-chip-lg { font-size: 14px; padding: 8px 14px; min-width: 62px; border-radius: 9px; }
+.log-table .group-chip { margin-right: 9px; vertical-align: middle; }
 
 .add-btn { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -331,11 +348,11 @@ input.edit-field, textarea.edit-field {
 .group-picker-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 12px;
   border: none;
   background: none;
   color: var(--text);
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;

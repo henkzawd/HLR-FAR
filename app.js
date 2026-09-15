@@ -64,6 +64,8 @@
       groupModalTitleAdd: "Ny gruppe",
       groupModalTitleEdit: "Rediger gruppe",
       fieldGroupName: "Gruppenavn",
+      fieldShortName: "Kort navn (vises i fargeikonet)",
+      fieldShortNamePlaceholder: "F.eks. RELIS, UL, F.Inst",
       fieldLocation: "Lokasjon",
       fieldNearestDefib: "Nærmeste hjertestarter",
       fieldDate: "Dato",
@@ -174,6 +176,8 @@
       groupModalTitleAdd: "New group",
       groupModalTitleEdit: "Edit group",
       fieldGroupName: "Group name",
+      fieldShortName: "Short name (shown in the color icon)",
+      fieldShortNamePlaceholder: "E.g. RELIS, UL, F.Inst",
       fieldLocation: "Location",
       fieldNearestDefib: "Nearest defibrillator",
       fieldDate: "Date",
@@ -228,11 +232,11 @@
   };
 
   var DEFAULT_GROUPS = [
-    { id: "relis", name: "RELIS", location: "Ullevål, bygg 50", defib: "1. etasje hos HABIO (bak dør som er låst for oss).", order: 1 },
-    { id: "ul", name: "UL", location: "Ullevål, bygg 6", defib: "4. etasje – venstre for midtre trappegang, og 3. etasje – høyre for midtre trappegang.", order: 2 },
-    { id: "farmasoytisk-institutt", name: "Farmasøytisk institutt", location: "Rikshospitalet", defib: "2. etasje, i hallen utenfor Patologi.", order: 3 },
-    { id: "sse", name: "SSE", location: "Spesialsykehuset for epilepsi (SSE)", defib: "Telemetri kontaktes på tlf. 675 01 244 og kommer med hjertestarter, jf. prosedyre.", order: 4 },
-    { id: "rh", name: "RH", location: "Rikshospitalet", defib: "", order: 5 },
+    { id: "relis", name: "RELIS", shortName: "RELIS", location: "Ullevål, bygg 50", defib: "1. etasje hos HABIO (bak dør som er låst for oss).", order: 1 },
+    { id: "ul", name: "UL", shortName: "UL", location: "Ullevål, bygg 6", defib: "4. etasje – venstre for midtre trappegang, og 3. etasje – høyre for midtre trappegang.", order: 2 },
+    { id: "farmasoytisk-institutt", name: "Farmasøytisk institutt", shortName: "F.Inst", location: "Rikshospitalet", defib: "2. etasje, i hallen utenfor Patologi.", order: 3 },
+    { id: "sse", name: "SSE", shortName: "SSE", location: "Spesialsykehuset for epilepsi (SSE)", defib: "Telemetri kontaktes på tlf. 675 01 244 og kommer med hjertestarter, jf. prosedyre.", order: 4 },
+    { id: "rh", name: "RH", shortName: "RH", location: "Rikshospitalet", defib: "", order: 5 },
   ];
 
   var GROUP_PALETTE = ["#4C7CE0", "#2FA6A0", "#8B6FD1", "#3FA65C", "#4FA8D8", "#6C6FCF", "#4CA6C7", "#7C9A3F"];
@@ -241,6 +245,16 @@
     var hash = 0;
     for (var i = 0; i < str.length; i++) { hash = (hash * 31 + str.charCodeAt(i)) >>> 0; }
     return GROUP_PALETTE[hash % GROUP_PALETTE.length];
+  }
+  function groupShortLabel(g) {
+    var custom = g && g.shortName && String(g.shortName).trim();
+    if (custom) return custom;
+    var name = (g && g.name) || "";
+    var words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length > 1) {
+      return words.map(function (w) { return w.charAt(0).toUpperCase(); }).slice(0, 4).join("");
+    }
+    return name.slice(0, 6).toUpperCase();
   }
 
   /* ============================================================
@@ -473,7 +487,7 @@
       card.setAttribute("data-group-id", g.id);
       card.style.setProperty("--gc", groupColor(g));
       card.innerHTML =
-        '<div class="group-name"><span class="group-dot"></span>' + esc(g.name) + "</div>" +
+        '<div class="group-name"><span class="group-chip">' + esc(groupShortLabel(g)) + "</span>" + esc(g.name) + "</div>" +
         '<div class="group-row"><span class="row-label">' + esc(t("rowLocation")) + '</span><span class="row-value">' + esc(g.location || t("dash")) + "</span></div>" +
         '<div class="group-row"><span class="row-label">' + esc(t("rowDefib")) + '</span><span class="row-value">' + esc(g.defib || t("noDefibInfo")) + "</span></div>";
       card.addEventListener("click", function () { openGroupModal(g.id); });
@@ -487,6 +501,7 @@
     var g = id ? state.groups.find(function (x) { return x.id === id; }) : null;
     $("#groupModalTitle").textContent = id ? t("groupModalTitleEdit") : t("groupModalTitleAdd");
     $("#groupNameInput").value = g ? g.name : "";
+    $("#groupShortNameInput").value = g ? (g.shortName || "") : "";
     $("#groupLocationInput").value = g ? g.location : "";
     $("#groupDefibInput").value = g ? g.defib : "";
     $("#deleteGroupBtn").hidden = !id;
@@ -500,6 +515,7 @@
     if (!requireDb()) return;
     var data = {
       name: $("#groupNameInput").value.trim(),
+      shortName: $("#groupShortNameInput").value.trim(),
       location: $("#groupLocationInput").value.trim(),
       defib: $("#groupDefibInput").value.trim(),
     };
@@ -536,7 +552,7 @@
       var tr = document.createElement("tr");
       var matchedGroup = entry.group ? state.groups.find(function (x) { return x.name === entry.group; }) : null;
       var groupCell = matchedGroup
-        ? '<span class="group-dot" style="--gc:' + groupColor(matchedGroup) + '"></span>' + esc(entry.group)
+        ? '<span class="group-chip" style="--gc:' + groupColor(matchedGroup) + '">' + esc(groupShortLabel(matchedGroup)) + "</span>" + esc(entry.group)
         : esc(entry.group || t("dash"));
       tr.innerHTML =
         '<td data-label="' + esc(t("colDate")) + '">' + esc(formatDate(entry.date)) + "</td>" +
@@ -572,7 +588,7 @@
       var btn = document.createElement("button");
       btn.type = "button";
       btn.className = "group-picker-item";
-      btn.innerHTML = '<span class="group-dot" style="--gc:' + groupColor(g) + '"></span><span>' + esc(g.name) + "</span>";
+      btn.innerHTML = '<span class="group-chip group-chip-lg" style="--gc:' + groupColor(g) + '">' + esc(groupShortLabel(g)) + "</span><span>" + esc(g.name) + "</span>";
       btn.addEventListener("click", function () {
         setLogGroupValue(g.name, g);
         $("#logGroupPicker").removeAttribute("open");
@@ -584,7 +600,9 @@
     $("#logGroupInput").value = name;
     var summary = $("#logGroupPickerSummary");
     if (name) {
-      summary.innerHTML = '<span class="group-dot" style="--gc:' + (group ? groupColor(group) : "var(--text-muted)") + '"></span><span>' + esc(name) + "</span>";
+      var chipLabel = group ? groupShortLabel(group) : "";
+      var chip = chipLabel ? '<span class="group-chip" style="--gc:' + groupColor(group) + '">' + esc(chipLabel) + "</span>" : "";
+      summary.innerHTML = chip + "<span>" + esc(name) + "</span>";
     } else {
       summary.innerHTML = '<span class="group-picker-placeholder">' + esc(t("fieldGroupOrSectionPlaceholder")) + "</span>";
     }
@@ -784,7 +802,7 @@
     groupsCol().limit(1).get().then(function (snap) {
       if (snap.empty) {
         DEFAULT_GROUPS.forEach(function (g) {
-          groupsCol().doc(g.id).set({ name: g.name, location: g.location, defib: g.defib, order: g.order });
+          groupsCol().doc(g.id).set({ name: g.name, shortName: g.shortName, location: g.location, defib: g.defib, order: g.order });
         });
       }
     }).catch(function () {});
