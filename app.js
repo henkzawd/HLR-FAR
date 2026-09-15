@@ -59,6 +59,14 @@
       deficiencyMarkResolved: "Merk som løst",
       deficiencyMarkUnresolved: "Merk som uløst",
       confirmDeleteDeficiency: "Slette denne mangelen? Dette kan ikke angres.",
+      deficiencyReportedLabel: "Registrert",
+      deficiencyResolvedLabel: "Løst",
+      deficiencyCommentLabel: "Kommentar",
+      addDeficiencyComment: "Legg til kommentar",
+      editDeficiencyComment: "Rediger kommentar",
+      deficiencyCommentModalTitle: "Kommentar til mangel",
+      fieldDeficiencyCommentText: "Kommentar",
+      removeDeficiencyComment: "Fjern kommentar",
       guideTitle: "HLR hurtigstart-guide",
       guideDesc: "Alt en koordinator trenger å huske på — fra innkalling til opprydding.",
       guideBold: "Fet",
@@ -182,6 +190,14 @@
       deficiencyMarkResolved: "Mark as resolved",
       deficiencyMarkUnresolved: "Mark as unresolved",
       confirmDeleteDeficiency: "Delete this issue? This cannot be undone.",
+      deficiencyReportedLabel: "Reported",
+      deficiencyResolvedLabel: "Resolved",
+      deficiencyCommentLabel: "Comment",
+      addDeficiencyComment: "Add a comment",
+      editDeficiencyComment: "Edit comment",
+      deficiencyCommentModalTitle: "Comment on issue",
+      fieldDeficiencyCommentText: "Comment",
+      removeDeficiencyComment: "Remove comment",
       guideTitle: "CPR quickstart guide",
       guideDesc: "Everything a coordinator needs to remember — from booking to cleanup.",
       guideBold: "Bold",
@@ -335,6 +351,7 @@
     editingMiniAnne: false,
     editingDefib: false,
     openGroupId: null, // null = ny gruppe, ellers id for redigering
+    openDeficiencyCommentId: null,
     bannerKey: null,
   };
 
@@ -705,6 +722,28 @@
   /* ============================================================
      8b. RENDER: MANGLER
      ============================================================ */
+  function deficiencyMetaLine(item) {
+    var parts = [];
+    if (item.createdAt) {
+      parts.push(
+        esc(t("deficiencyReportedLabel")) + ": " + esc(formatDateTime(item.createdAt)) +
+        (item.reportedBy ? " · " + esc(item.reportedBy) : "")
+      );
+    }
+    if (item.resolved && item.resolvedAt) {
+      parts.push(esc(t("deficiencyResolvedLabel")) + ": " + esc(formatDateTime(item.resolvedAt)));
+    }
+    return parts.join(" · ");
+  }
+
+  function deficiencyCommentMetaLine(item) {
+    if (!item.commentAt && !item.commentBy) return "";
+    var text = esc(t("deficiencyCommentLabel"));
+    if (item.commentAt) text += ": " + esc(formatDateTime(item.commentAt));
+    if (item.commentBy) text += " · " + esc(item.commentBy);
+    return text;
+  }
+
   function renderDeficiencies() {
     var list = $("#deficiencyList");
     list.innerHTML = "";
@@ -718,16 +757,35 @@
     items.forEach(function (item) {
       var row = document.createElement("div");
       row.className = "deficiency-row" + (item.resolved ? " is-resolved" : "");
+
+      var metaLine = deficiencyMetaLine(item);
+      var commentMeta = deficiencyCommentMetaLine(item);
+      var commentHtml = item.comment
+        ? '<div class="deficiency-comment"><div class="deficiency-comment-text">' + esc(item.comment) + "</div>" +
+          (commentMeta ? '<div class="deficiency-comment-meta">' + commentMeta + "</div>" : "") +
+          "</div>"
+        : "";
+
       row.innerHTML =
+        '<div class="deficiency-main">' +
         '<label class="deficiency-check">' +
         '<input type="checkbox" ' + (item.resolved ? "checked " : "") + 'aria-label="' + esc(item.resolved ? t("deficiencyMarkUnresolved") : t("deficiencyMarkResolved")) + '" />' +
+        '<span class="check-visual" aria-hidden="true"><svg viewBox="0 0 24 24"><path class="check-path" d="M5 13l4 4L19 7" /></svg></span>' +
         "</label>" +
+        '<div class="deficiency-body">' +
         '<span class="deficiency-text">' + esc(item.text) + "</span>" +
+        (metaLine ? '<div class="deficiency-meta">' + metaLine + "</div>" : "") +
+        commentHtml +
+        '<button class="deficiency-comment-btn" type="button">' + esc(item.comment ? t("editDeficiencyComment") : t("addDeficiencyComment")) + "</button>" +
+        "</div>" +
         '<button class="row-delete" type="button" aria-label="' + esc(t("delete")) + '">' +
         '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></svg>' +
-        "</button>";
+        "</button>" +
+        "</div>";
+
       $("input[type=checkbox]", row).addEventListener("change", function (ev) { toggleDeficiencyResolved(item.id, ev.target.checked); });
       $(".row-delete", row).addEventListener("click", function () { deleteDeficiency(item.id); });
+      $(".deficiency-comment-btn", row).addEventListener("click", function () { openDeficiencyCommentModal(item); });
       list.appendChild(row);
     });
 
@@ -753,8 +811,10 @@
     if (!requireDb()) return;
     var text = $("#deficiencyTextInput").value.trim();
     if (!text) return;
+    var by = $("#deficiencyByInput").value.trim();
     deficienciesCol().add({
       text: text,
+      reportedBy: by,
       resolved: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     }).then(function () { closeDeficiencyModal(); toast(t("toastSaved")); }).catch(onDbError);
@@ -770,6 +830,36 @@
     if (!requireDb()) return;
     if (!confirm(t("confirmDeleteDeficiency"))) return;
     deficienciesCol().doc(id).delete().then(function () { toast(t("toastDeleted")); }).catch(onDbError);
+  }
+
+  function openDeficiencyCommentModal(item) {
+    state.openDeficiencyCommentId = item.id;
+    $("#deficiencyCommentTextInput").value = item.comment || "";
+    $("#deficiencyCommentByInput").value = item.commentBy || "";
+    $("#removeDeficiencyCommentBtn").hidden = !item.comment;
+    $("#deficiencyCommentModalOverlay").hidden = false;
+    $("#deficiencyCommentTextInput").focus();
+  }
+  function closeDeficiencyCommentModal() {
+    $("#deficiencyCommentModalOverlay").hidden = true;
+    state.openDeficiencyCommentId = null;
+  }
+  function submitDeficiencyCommentForm(ev) {
+    ev.preventDefault();
+    if (!requireDb() || !state.openDeficiencyCommentId) return;
+    var text = $("#deficiencyCommentTextInput").value.trim();
+    var by = $("#deficiencyCommentByInput").value.trim();
+    deficienciesCol().doc(state.openDeficiencyCommentId).set(
+      { comment: text, commentBy: by, commentAt: text ? firebase.firestore.FieldValue.serverTimestamp() : null },
+      { merge: true }
+    ).then(function () { closeDeficiencyCommentModal(); toast(t("toastSaved")); }).catch(onDbError);
+  }
+  function removeDeficiencyComment() {
+    if (!requireDb() || !state.openDeficiencyCommentId) return;
+    deficienciesCol().doc(state.openDeficiencyCommentId).set(
+      { comment: "", commentBy: "", commentAt: null },
+      { merge: true }
+    ).then(function () { closeDeficiencyCommentModal(); toast(t("toastDeleted")); }).catch(onDbError);
   }
 
   /* ============================================================
@@ -1077,11 +1167,18 @@
     deficienciesCol().onSnapshot(function (snap) {
       state.deficiencies = snap.docs.map(function (d) {
         var data = d.data();
+        var createdAt = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : null;
         return {
           id: d.id,
           text: data.text || "",
+          reportedBy: data.reportedBy || "",
+          createdAt: createdAt,
+          createdAtMs: createdAt ? createdAt.getTime() : 0,
           resolved: !!data.resolved,
-          createdAtMs: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().getTime() : 0,
+          resolvedAt: data.resolvedAt && data.resolvedAt.toDate ? data.resolvedAt.toDate() : null,
+          comment: data.comment || "",
+          commentBy: data.commentBy || "",
+          commentAt: data.commentAt && data.commentAt.toDate ? data.commentAt.toDate() : null,
         };
       });
       renderDeficiencies();
@@ -1175,8 +1272,13 @@
     $("#cancelDeficiencyBtn").addEventListener("click", closeDeficiencyModal);
     $("#deficiencyModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeDeficiencyModal(); });
 
+    $("#deficiencyCommentForm").addEventListener("submit", submitDeficiencyCommentForm);
+    $("#cancelDeficiencyCommentBtn").addEventListener("click", closeDeficiencyCommentModal);
+    $("#removeDeficiencyCommentBtn").addEventListener("click", removeDeficiencyComment);
+    $("#deficiencyCommentModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeDeficiencyCommentModal(); });
+
     document.addEventListener("keydown", function (ev) {
-      if (ev.key === "Escape") { closeGroupModal(); closeLogModal(); closeDeficiencyModal(); }
+      if (ev.key === "Escape") { closeGroupModal(); closeLogModal(); closeDeficiencyModal(); closeDeficiencyCommentModal(); }
     });
   }
 
