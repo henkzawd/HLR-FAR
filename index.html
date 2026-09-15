@@ -288,10 +288,38 @@
         <span data-i18n="fieldDeficiencyText">Hva mangler / må fikses?</span>
         <textarea id="deficiencyTextInput" rows="3" required placeholder="F.eks. Mini-Anne har sprukket lunge, må bestille flere ansiktsduker …"></textarea>
       </label>
+      <label class="field">
+        <span data-i18n="fieldYourName">Ditt navn</span>
+        <input type="text" id="deficiencyByInput" />
+      </label>
       <div class="modal-actions">
         <div></div>
         <div class="modal-actions-right">
           <button type="button" class="btn btn-ghost" id="cancelDeficiencyBtn" data-i18n="cancel">Avbryt</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: deficiency comment ============ -->
+<div class="modal-overlay" id="deficiencyCommentModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deficiencyCommentModalTitle">
+    <h2 id="deficiencyCommentModalTitle" data-i18n="deficiencyCommentModalTitle">Kommentar til mangel</h2>
+    <form id="deficiencyCommentForm">
+      <label class="field">
+        <span data-i18n="fieldDeficiencyCommentText">Kommentar</span>
+        <textarea id="deficiencyCommentTextInput" rows="3"></textarea>
+      </label>
+      <label class="field">
+        <span data-i18n="fieldYourName">Ditt navn</span>
+        <input type="text" id="deficiencyCommentByInput" />
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="removeDeficiencyCommentBtn" hidden data-i18n="removeDeficiencyComment">Fjern kommentar</button>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelDeficiencyCommentBtn" data-i18n="cancel">Avbryt</button>
           <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
         </div>
       </div>
