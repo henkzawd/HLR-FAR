@@ -136,21 +136,27 @@ i nettleseren, på GitHub sine nettsider:
 > faktisk beskytter dataene deres er sikkerhetsreglene fra steg 4, ikke
 > hvorvidt noen kan se denne teksten.
 
-## Steg 7 — Publiser nettsiden med GitHub Pages
+## Steg 7 — Nettsiden publiseres automatisk
 
-1. Gå til prosjektets side på GitHub, trykk på **«Settings»** (fanen helt
-   til høyre i menyen øverst på repoet).
-2. Velg **«Pages»** i menyen til venstre.
-3. Under **«Build and deployment» → «Source»**, velg **«Deploy from a
-   branch»**.
-4. Under **«Branch»**, velg branchen som inneholder den ferdige appen
-   (vanligvis `main`), og mappen **`/ (root)`**. Trykk **Save**.
-5. Vent 1–2 minutter, last siden på nytt — GitHub viser deg da en lenke
-   øverst av typen:
+Dette prosjektet er allerede koblet til **Vercel** (en gratis
+publiseringstjeneste), så du trenger ikke gjøre noe manuelt her:
 
-   `https://<brukernavn>.github.io/hlr-far/`
+- Hver gang noen lagrer en endring i prosjektet på en gren (branch) med en
+  åpen «pull request», legger Vercel automatisk ut en midlertidig
+  forhåndsvisnings-lenke som en kommentar nederst på pull requesten på
+  GitHub (ser ut som `https://hlr-far-git-<grennavn>-<konto>.vercel.app`).
+- Når endringene blir slått sammen («merget») til hovedgrenen (`main`),
+  får dere i tillegg en **fast lenke** — noe sånt som
+  `https://hlr-far.vercel.app` eller `https://hlr-far-<konto>.vercel.app`.
 
-   **Dette er lenken du deler med alle HLR-koordinatorene.**
+  **Dette er den faste lenken du deler med alle HLR-koordinatorene.** Du
+  finner den nøyaktige adressen enten i kommentarfeltet på pull requesten,
+  eller ved å logge inn på <https://vercel.com> og åpne prosjektet
+  `hlr-far`.
+
+> Skulle Vercel-koblingen forsvinne eller slutte å virke en gang i
+> fremtiden, er GitHub Pages et like godt gratis alternativ: Settings →
+> Pages → «Deploy from a branch» → velg `main` og `/ (root)` → Save.
 
 ---
 

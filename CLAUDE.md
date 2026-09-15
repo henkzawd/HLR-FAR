@@ -3,7 +3,9 @@
 Static web app (no build step) for coordinating CPR/AED equipment and
 training for the Pharmacology department (FAR) at OUS. Plain
 HTML/CSS/JS, backed by Firebase Firestore (anonymous auth) for shared,
-realtime-editable data. Intended to be served via GitHub Pages.
+realtime-editable data. Served via Vercel, which is already connected
+to this GitHub repo (auto-deploys previews on PRs and a fixed URL on
+`main`) — see `OPPSETT.md` step 7.
 
 - `index.html` / `styles.css` / `app.js` — the whole app. `app.js` holds
   the Norwegian/English translation dictionaries and all Firestore
@@ -11,8 +13,8 @@ realtime-editable data. Intended to be served via GitHub Pages.
 - `firebase-config.js` — placeholder Firebase web config; the user fills
   this in themselves, see `OPPSETT.md`.
 - `OPPSETT.md` — Norwegian, non-technical, step-by-step setup guide
-  (Firebase project + GitHub Pages) for the person doing the one-time
-  setup.
+  (Firebase project setup; deployment is already automatic via Vercel)
+  for the person doing the one-time setup.
 - `README.md` — Norwegian, day-to-day usage guide for coordinators.
 
 **Audience note:** the project owner has explicitly said they have zero

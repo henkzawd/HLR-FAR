@@ -69,5 +69,6 @@ enkel tekstredigerer:
   OPPSETT.md)
 
 Data lagres i **Firebase Firestore** (sanntidsdatabase) og oppdateres
-automatisk hos alle som har siden åpen. Siden er ment publisert med
-**GitHub Pages** direkte fra dette repoet.
+automatisk hos alle som har siden åpen. Siden publiseres automatisk av
+**Vercel**, som allerede er koblet til dette repoet — se OPPSETT.md,
+steg 7.
