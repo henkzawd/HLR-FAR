@@ -50,7 +50,12 @@ Appen har fem faner, enten i menyen til venstre (på PC) eller nederst
   og huk av boksen når det er ordnet. Tallet ved siden av «Mangler» i menyen
   viser hvor mange uløste mangler som står igjen.
 - **Hurtigstart** — hele HLR-guiden, delt inn i tre steg (forberedelse,
-  selve opplæringen, og opprydding). Trykk på et felt for å folde det ut.
+  selve opplæringen, og opprydding). Trykk på et felt for å folde det ut,
+  eller på blyant-ikonet for å redigere teksten (fet/kursiv, punktlister og
+  lenker støttes). Skriv inn navnet ditt før du lagrer. Endringer i den
+  norske teksten merker den engelske versjonen med «kan være utdatert» helt
+  til noen oppdaterer den engelske teksten manuelt. En liten «Endringslogg»
+  nederst på siden viser hvem som har endret hva og når.
 
 Øverst til høyre kan du:
 - Bytte **språk** mellom norsk og engelsk (🇳🇴 NO / 🇬🇧 EN).

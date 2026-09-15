@@ -61,6 +61,17 @@
       confirmDeleteDeficiency: "Slette denne mangelen? Dette kan ikke angres.",
       guideTitle: "HLR hurtigstart-guide",
       guideDesc: "Alt en koordinator trenger å huske på — fra innkalling til opprydding.",
+      guideBold: "Fet",
+      guideItalic: "Kursiv",
+      guideBulletList: "Punktliste",
+      guideNumberList: "Nummerert liste",
+      guideLink: "Lenke",
+      guideUnlink: "Fjern lenke",
+      guideClearFormat: "Fjern formatering",
+      guideLinkPrompt: "Lim inn lenke (URL):",
+      guideNeedsTranslation: "Norsk tekst er endret – engelsk versjon kan være utdatert.",
+      guideChangelogSummary: "Endringslogg",
+      guideChangelogEmpty: "Ingen endringer registrert ennå.",
       groupModalTitleAdd: "Ny gruppe",
       groupModalTitleEdit: "Rediger gruppe",
       fieldGroupName: "Gruppenavn",
@@ -173,6 +184,17 @@
       confirmDeleteDeficiency: "Delete this issue? This cannot be undone.",
       guideTitle: "CPR quickstart guide",
       guideDesc: "Everything a coordinator needs to remember — from booking to cleanup.",
+      guideBold: "Bold",
+      guideItalic: "Italic",
+      guideBulletList: "Bullet list",
+      guideNumberList: "Numbered list",
+      guideLink: "Link",
+      guideUnlink: "Remove link",
+      guideClearFormat: "Clear formatting",
+      guideLinkPrompt: "Paste link (URL):",
+      guideNeedsTranslation: "The Norwegian text has changed – the English version may be out of date.",
+      guideChangelogSummary: "Change log",
+      guideChangelogEmpty: "No changes logged yet.",
       groupModalTitleAdd: "New group",
       groupModalTitleEdit: "Edit group",
       fieldGroupName: "Group name",
@@ -257,6 +279,44 @@
     return name.slice(0, 6).toUpperCase();
   }
 
+  var GUIDE_SEED = T.no.guideSections.map(function (sec, i) {
+    var en = (T.en.guideSections && T.en.guideSections[i]) || {};
+    return {
+      id: "section-" + (i + 1),
+      title: sec.title,
+      html: sec.html,
+      titleEn: en.title || sec.title,
+      htmlEn: en.html || sec.html,
+    };
+  });
+
+  var GUIDE_ALLOWED_TAGS = { P: 1, UL: 1, OL: 1, LI: 1, B: 1, STRONG: 1, I: 1, EM: 1, BR: 1, A: 1 };
+  function sanitizeGuideHtml(html) {
+    var doc = document.implementation.createHTMLDocument("");
+    doc.body.innerHTML = String(html || "");
+    (function walk(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (child) {
+        if (child.nodeType === 1) {
+          if (!GUIDE_ALLOWED_TAGS[child.tagName]) {
+            node.replaceChild(document.createTextNode(child.textContent), child);
+            return;
+          }
+          Array.prototype.slice.call(child.attributes).forEach(function (attr) {
+            if (child.tagName === "A" && attr.name === "href") {
+              if (!/^(https?:|mailto:)/i.test(attr.value.trim())) child.removeAttribute("href");
+            } else {
+              child.removeAttribute(attr.name);
+            }
+          });
+          walk(child);
+        } else if (child.nodeType !== 3) {
+          node.removeChild(child);
+        }
+      });
+    })(doc.body);
+    return doc.body.innerHTML;
+  }
+
   /* ============================================================
      1. TILSTAND
      ============================================================ */
@@ -269,6 +329,9 @@
     groups: [],
     log: [],
     deficiencies: [],
+    guideSections: [],
+    guideChangelog: [],
+    editingGuideId: null,
     editingMiniAnne: false,
     editingDefib: false,
     openGroupId: null, // null = ny gruppe, ellers id for redigering
@@ -712,28 +775,173 @@
   /* ============================================================
      9. RENDER: GUIDE
      ============================================================ */
+  function currentGuideSections() {
+    if (state.guideSections && state.guideSections.length) return state.guideSections;
+    return GUIDE_SEED.map(function (sec) { return Object.assign({ enNeedsReview: false }, sec); });
+  }
+
+  function guideMetaText(sec, isEn) {
+    var at = isEn ? sec.enUpdatedAt : sec.updatedAt;
+    var by = isEn ? sec.enUpdatedBy : sec.updatedBy;
+    if (!at) return "";
+    return t("lastUpdated") + ": " + formatDateTime(at) + (by ? " · " + by : "");
+  }
+
   function renderGuide() {
     var acc = $("#guideAccordion");
     var openIndex = $all(".accordion-item", acc).findIndex(function (el) { return el.classList.contains("is-open"); });
     acc.innerHTML = "";
-    var sections = t("guideSections");
+    var sections = currentGuideSections();
+    var isEn = state.lang === "en";
+
     sections.forEach(function (sec, i) {
+      var isEditing = state.editingGuideId === sec.id;
+      var isOpen = isEditing || (!state.editingGuideId && i === (openIndex === -1 ? 0 : openIndex));
       var item = document.createElement("div");
-      item.className = "accordion-item" + (i === (openIndex === -1 ? 0 : openIndex) ? " is-open" : "");
-      item.innerHTML =
-        '<button class="accordion-trigger" type="button" aria-expanded="' + (i === 0 ? "true" : "false") + '">' +
-        "<span>" + esc(sec.title) + "</span>" +
-        '<svg class="chevron" viewBox="0 0 24 24" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>' +
-        "</button>" +
-        '<div class="accordion-panel"><div class="accordion-body">' + sec.html + "</div></div>";
-      var trigger = $(".accordion-trigger", item);
-      trigger.addEventListener("click", function () {
-        var isOpen = item.classList.contains("is-open");
-        $all(".accordion-item", acc).forEach(function (el) { el.classList.remove("is-open"); $(".accordion-trigger", el).setAttribute("aria-expanded", "false"); });
-        if (!isOpen) { item.classList.add("is-open"); trigger.setAttribute("aria-expanded", "true"); }
-      });
+      item.className = "accordion-item" + (isOpen ? " is-open" : "");
+      item.setAttribute("data-guide-id", sec.id);
+
+      if (isEditing) {
+        var editTitle = isEn ? (sec.titleEn || sec.title) : sec.title;
+        var editHtml = isEn ? (sec.htmlEn || sec.html) : sec.html;
+        var editBy = isEn ? sec.enUpdatedBy : sec.updatedBy;
+        item.innerHTML =
+          '<div class="guide-editor">' +
+          '<input class="edit-field guide-title-input" type="text" />' +
+          '<div class="guide-toolbar">' +
+          '<button type="button" class="guide-tb-btn" data-cmd="bold" title="' + esc(t("guideBold")) + '"><b>B</b></button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="italic" title="' + esc(t("guideItalic")) + '"><i>I</i></button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="insertUnorderedList" title="' + esc(t("guideBulletList")) + '">☰</button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="insertOrderedList" title="' + esc(t("guideNumberList")) + '">1.</button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="link" title="' + esc(t("guideLink")) + '">🔗</button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="unlink" title="' + esc(t("guideUnlink")) + '">🔗╱</button>' +
+          '<button type="button" class="guide-tb-btn" data-cmd="removeFormat" title="' + esc(t("guideClearFormat")) + '">✕</button>' +
+          "</div>" +
+          '<div class="guide-body-editable" contenteditable="true">' + sanitizeGuideHtml(editHtml) + "</div>" +
+          '<input class="edit-field guide-by-input" type="text" placeholder="' + esc(t("fieldYourName")) + '" />' +
+          '<div class="card-actions">' +
+          '<button type="button" class="btn btn-primary guide-save-btn">' + esc(t("save")) + "</button>" +
+          '<button type="button" class="btn btn-ghost guide-cancel-btn">' + esc(t("cancel")) + "</button>" +
+          "</div>" +
+          "</div>";
+
+        $(".guide-title-input", item).value = editTitle;
+        $(".guide-by-input", item).value = editBy || "";
+
+        var toolbar = $(".guide-toolbar", item);
+        toolbar.addEventListener("mousedown", function (ev) { ev.preventDefault(); });
+        toolbar.addEventListener("click", function (ev) {
+          var btn = ev.target.closest(".guide-tb-btn");
+          if (!btn) return;
+          var cmd = btn.getAttribute("data-cmd");
+          if (cmd === "link") {
+            var sel0 = window.getSelection();
+            var range0 = sel0 && sel0.rangeCount ? sel0.getRangeAt(0).cloneRange() : null;
+            var url = window.prompt(t("guideLinkPrompt"), "https://");
+            if (url) {
+              if (range0) { sel0.removeAllRanges(); sel0.addRange(range0); }
+              document.execCommand("createLink", false, url);
+            }
+          } else {
+            document.execCommand(cmd, false, null);
+          }
+        });
+        $(".guide-save-btn", item).addEventListener("click", function () { saveGuideSection(sec, item); });
+        $(".guide-cancel-btn", item).addEventListener("click", function () { state.editingGuideId = null; renderGuide(); });
+      } else {
+        var title = isEn ? (sec.titleEn || sec.title) : sec.title;
+        var bodyHtml = isEn ? (sec.htmlEn || sec.html) : sec.html;
+        var meta = guideMetaText(sec, isEn);
+        item.innerHTML =
+          '<div class="accordion-head">' +
+          '<button class="accordion-trigger" type="button" aria-expanded="' + (isOpen ? "true" : "false") + '">' +
+          "<span>" + esc(title) + "</span>" +
+          '<svg class="chevron" viewBox="0 0 24 24" width="18" height="18"><polyline points="6 9 12 15 18 9"/></svg>' +
+          "</button>" +
+          '<button class="accordion-edit-btn" type="button" aria-label="' + esc(t("edit")) + '">' +
+          '<svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><line x1="13.5" y1="6.5" x2="17.5" y2="10.5"/></svg>' +
+          "</button>" +
+          "</div>" +
+          '<div class="accordion-panel"><div class="accordion-body">' +
+          (isEn && sec.enNeedsReview ? '<p class="guide-review-note">' + esc(t("guideNeedsTranslation")) + "</p>" : "") +
+          sanitizeGuideHtml(bodyHtml) +
+          (meta ? '<p class="guide-meta">' + esc(meta) + "</p>" : "") +
+          "</div></div>";
+
+        var trigger = $(".accordion-trigger", item);
+        trigger.addEventListener("click", function () {
+          var isOpenNow = item.classList.contains("is-open");
+          $all(".accordion-item", acc).forEach(function (el) { el.classList.remove("is-open"); var tr = $(".accordion-trigger", el); if (tr) tr.setAttribute("aria-expanded", "false"); });
+          if (!isOpenNow) { item.classList.add("is-open"); trigger.setAttribute("aria-expanded", "true"); }
+        });
+        $(".accordion-edit-btn", item).addEventListener("click", function (ev) {
+          ev.stopPropagation();
+          state.editingGuideId = sec.id;
+          renderGuide();
+        });
+      }
+
       acc.appendChild(item);
     });
+  }
+
+  function saveGuideSection(sec) {
+    if (!requireDb()) return;
+    var item = $('.accordion-item[data-guide-id="' + sec.id + '"]');
+    if (!item) return;
+    var isEn = state.lang === "en";
+    var title = $(".guide-title-input", item).value.trim();
+    var html = sanitizeGuideHtml($(".guide-body-editable", item).innerHTML);
+    var by = $(".guide-by-input", item).value.trim();
+    if (!title || !html) { toast(t("toastError")); return; }
+
+    var data = {};
+    if (isEn) {
+      data.titleEn = title;
+      data.htmlEn = html;
+      data.enUpdatedBy = by;
+      data.enUpdatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.enNeedsReview = false;
+    } else {
+      data.title = title;
+      data.html = html;
+      data.updatedBy = by;
+      data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      data.enNeedsReview = true;
+    }
+
+    guideCol().doc(sec.id).set(data, { merge: true })
+      .then(function () {
+        return guideChangelogCol().add({
+          sectionTitle: title,
+          lang: isEn ? "en" : "no",
+          by: by,
+          at: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      })
+      .then(function () {
+        state.editingGuideId = null;
+        renderGuide();
+        toast(t("toastSaved"));
+      })
+      .catch(onDbError);
+  }
+
+  function renderGuideChangelog() {
+    var list = $("#guideChangelogList");
+    if (!list) return;
+    if (!state.guideChangelog.length) {
+      list.innerHTML = '<p class="changelog-empty">' + esc(t("guideChangelogEmpty")) + "</p>";
+      return;
+    }
+    list.innerHTML = state.guideChangelog.map(function (entry) {
+      var langLabel = entry.lang === "en" ? "EN" : "NO";
+      return '<div class="changelog-row">' +
+        esc(entry.at ? formatDateTime(entry.at) : t("dash")) +
+        " – " + esc(entry.sectionTitle) + " (" + langLabel + ")" +
+        (entry.by ? " · " + esc(entry.by) : "") +
+        "</div>";
+    }).join("");
   }
 
   /* ============================================================
@@ -743,6 +951,8 @@
   function groupsCol() { return state.db.collection("groups"); }
   function logCol() { return state.db.collection("trainingLog"); }
   function deficienciesCol() { return state.db.collection("deficiencies"); }
+  function guideCol() { return state.db.collection("guide"); }
+  function guideChangelogCol() { return state.db.collection("guideChangelog"); }
 
   function requireDb() {
     if (state.dbReady) return true;
@@ -789,6 +999,8 @@
       subscribeGroups();
       subscribeLog();
       subscribeDeficiencies();
+      subscribeGuide();
+      subscribeGuideChangelog();
     });
   }
 
@@ -803,6 +1015,21 @@
       if (snap.empty) {
         DEFAULT_GROUPS.forEach(function (g) {
           groupsCol().doc(g.id).set({ name: g.name, shortName: g.shortName, location: g.location, defib: g.defib, order: g.order });
+        });
+      }
+    }).catch(function () {});
+
+    guideCol().limit(1).get().then(function (snap) {
+      if (snap.empty) {
+        GUIDE_SEED.forEach(function (sec, i) {
+          guideCol().doc(sec.id).set({
+            title: sec.title,
+            html: sec.html,
+            titleEn: sec.titleEn,
+            htmlEn: sec.htmlEn,
+            enNeedsReview: false,
+            order: i + 1,
+          });
         });
       }
     }).catch(function () {});
@@ -864,6 +1091,40 @@
     });
   }
 
+  function subscribeGuide() {
+    guideCol().orderBy("order").onSnapshot(function (snap) {
+      state.guideSections = snap.docs.map(function (d) {
+        var data = d.data();
+        return Object.assign({ id: d.id }, data, {
+          updatedAt: data.updatedAt && data.updatedAt.toDate ? data.updatedAt.toDate() : null,
+          enUpdatedAt: data.enUpdatedAt && data.enUpdatedAt.toDate ? data.enUpdatedAt.toDate() : null,
+        });
+      });
+      if (!state.editingGuideId) renderGuide();
+    }, function (err) {
+      console.error(err);
+      showBanner("bannerPermission");
+    });
+  }
+
+  function subscribeGuideChangelog() {
+    guideChangelogCol().orderBy("at", "desc").limit(50).onSnapshot(function (snap) {
+      state.guideChangelog = snap.docs.map(function (d) {
+        var data = d.data();
+        return {
+          id: d.id,
+          sectionTitle: data.sectionTitle || "",
+          lang: data.lang || "no",
+          by: data.by || "",
+          at: data.at && data.at.toDate ? data.at.toDate() : null,
+        };
+      });
+      renderGuideChangelog();
+    }, function (err) {
+      console.error(err);
+    });
+  }
+
   /* ============================================================
      11. OPPSTART
      ============================================================ */
@@ -874,6 +1135,7 @@
     renderLog();
     renderDeficiencies();
     renderGuide();
+    renderGuideChangelog();
   }
 
   function bindEvents() {
