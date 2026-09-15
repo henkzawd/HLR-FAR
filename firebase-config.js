@@ -17,10 +17,10 @@
 // ============================================================
 
 window.HLR_FIREBASE_CONFIG = {
-  apiKey: "SKRIV_INN_DIN_EGEN_HER",
-  authDomain: "SKRIV_INN_DIN_EGEN_HER.firebaseapp.com",
-  projectId: "SKRIV_INN_DIN_EGEN_HER",
-  storageBucket: "SKRIV_INN_DIN_EGEN_HER.appspot.com",
-  messagingSenderId: "SKRIV_INN_DIN_EGEN_HER",
-  appId: "SKRIV_INN_DIN_EGEN_HER",
+  apiKey: "AIzaSyAfxkHUSsQM-plBIDkAO95kOyaxrC0FLZs",
+  authDomain: "hlr-far.firebaseapp.com",
+  projectId: "hlr-far",
+  storageBucket: "hlr-far.firebasestorage.app",
+  messagingSenderId: "371183500195",
+  appId: "1:371183500195:web:ead7f61f1032d8c0a87816"
 };
