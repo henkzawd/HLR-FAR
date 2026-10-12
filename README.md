@@ -89,7 +89,14 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
   trykker på fylles inn automatisk), eller trykk **«Ny økt»**.
   Velg dato, starttidspunkt og **lengde** (i halve timer — fra 30 min og
   opp til kl. 16:00), og skriv inn **maks antall påmeldte**. Du kan legge
-  inn to notater:
+  inn et **rom** og to notater:
+  - **Rom** — hvor opplæringen holdes (f.eks. «Rom 3.201, Ullevål bygg 6»).
+    Rommet vises for deltakerne i selve kalenderblokken, i påmeldingsvinduet,
+    i bekreftelsen etter påmelding og i kalenderfilen/Outlook-utkastet.
+    Det er valgfritt. Trykk **«Husk dette rommet»** for å lagre rommet:
+    det dukker da opp som en knapp under «Lagrede rom», så du bare trykker
+    på den neste gang. Trykk på **×** på en knapp for å fjerne rommet fra
+    listen (det endrer ikke økter som allerede er opprettet).
   - **Notat til deltakere** — vises for deltakerne når de melder seg på
     (f.eks. «Møt opp i god tid, ta med inngangskort»).
   - **Notat til organisatorer** — kun synlig for koordinatorer.

@@ -395,6 +395,23 @@
         <span data-i18n="fieldCapacity">Maks antall påmeldte</span>
         <input type="number" id="sessionCapacityInput" min="1" max="200" step="1" required />
       </label>
+      <div class="room-box">
+        <label class="field">
+          <span data-i18n="fieldRoom">Rom</span>
+          <div class="room-input-row">
+            <input type="text" id="sessionRoomInput" maxlength="80" autocomplete="off" data-i18n-placeholder="roomPlaceholder" placeholder="F.eks. Rom 3.201, Ullevål bygg 6" />
+            <button type="button" class="btn btn-outline" id="rememberRoomBtn" disabled>
+              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 3.5h12v17l-6-4-6 4z"/></svg>
+              <span id="rememberRoomLabel" data-i18n="rememberRoom">Husk dette rommet</span>
+            </button>
+          </div>
+        </label>
+        <div class="room-saved">
+          <div class="room-saved-label" data-i18n="savedRooms">Lagrede rom (trykk for å bruke)</div>
+          <div class="room-chips" id="savedRooms"></div>
+          <p class="field-hint" id="savedRoomsEmpty" data-i18n="noSavedRooms">Ingen lagrede rom ennå.</p>
+        </div>
+      </div>
       <label class="field">
         <span data-i18n="fieldParticipantNote">Notat til deltakere (vises i påmeldingen)</span>
         <textarea id="sessionParticipantNoteInput" rows="3"></textarea>
@@ -429,6 +446,7 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
     <h2 id="signupTitle" data-i18n="signupTitle">Meld deg på</h2>
     <p class="signup-when" id="signupWhen"></p>
+    <p class="signup-room" id="signupRoom" hidden>📍 <span data-i18n="signupRoomLabel">Rom</span>: <strong id="signupRoomName"></strong></p>
 
     <div class="signup-capacity">
       <div class="signup-capacity-text" id="signupCapacityText"></div>
@@ -489,6 +507,7 @@
       <div class="signup-done-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg></div>
       <h3 data-i18n="signupDoneTitle">Du er påmeldt!</h3>
       <p id="signupDoneText"></p>
+      <p class="signup-room" id="signupDoneRoom" hidden>📍 <span data-i18n="signupRoomLabel">Rom</span>: <strong id="signupDoneRoomName"></strong></p>
       <p class="signup-warning" data-i18n="signupNoReceipt">Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.</p>
       <div class="signup-cal">
         <button type="button" class="btn btn-outline" id="icsBtn">
