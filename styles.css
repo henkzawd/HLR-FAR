@@ -641,6 +641,338 @@ input.edit-field, textarea.edit-field {
 .modal-actions-right { display: flex; gap: 8px; }
 
 /* =========================================================
+   Rolle-visning (deltaker / koordinator)
+   ========================================================= */
+/* Før man har valgt rolle skal ingenting av selve siden vises. */
+body:not([data-role]) .app-shell { visibility: hidden; }
+/* Deltakere ser kun kalenderen – ingen meny. */
+body[data-role="participant"] .nav { display: none; }
+
+/* =========================================================
+   Innloggings-popup
+   ========================================================= */
+.login-overlay {
+  background:
+    radial-gradient(900px 500px at 15% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%),
+    radial-gradient(800px 500px at 90% 95%, color-mix(in srgb, var(--info) 12%, transparent), transparent 70%),
+    var(--bg);
+  z-index: 300;
+}
+.login-modal { max-width: 440px; padding: 26px; }
+.login-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.login-brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.login-brand svg path[fill] { stroke: none; }
+.login-modal h2 { font-size: 22px; margin-bottom: 4px; }
+.login-sub { color: var(--text-muted); margin-bottom: 16px; }
+.role-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+}
+.role-card:hover { border-color: var(--accent); background: var(--surface-raised); }
+.role-card:active { transform: scale(0.99); }
+.role-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.role-card-icon { font-size: 28px; line-height: 1; flex: none; }
+.role-card-text { display: flex; flex-direction: column; gap: 2px; }
+.role-card-text strong { font-family: var(--font-display); font-size: 16px; }
+.role-card-text small { color: var(--text-muted); font-size: 13px; }
+.form-error {
+  color: var(--accent-strong);
+  background: var(--warn-bg);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+.is-shake { animation: shake 0.35s ease; }
+@keyframes shake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+
+.modal-wide { max-width: 560px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field select {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 400;
+}
+.field-hint { font-size: 12.5px; color: var(--text-muted); margin: -6px 0 12px; }
+
+/* =========================================================
+   Kalender / påmelding
+   ========================================================= */
+#view-kalender { max-width: 1120px; }
+#view-kalender .view-head { margin-bottom: 16px; }
+
+.cal-toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.cal-nav { display: flex; gap: 6px; }
+.cal-week-label { font-size: 17px; font-weight: 600; }
+
+.cal-next-available {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--ok-bg);
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  border-radius: 999px;
+  padding: 8px 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+}
+.cal-next-available:hover { border-color: var(--ok); }
+.cal-next-available:active { transform: scale(0.99); }
+.cal-next-dot { width: 9px; height: 9px; flex: none; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 var(--ok); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 55%, transparent); } 70% { box-shadow: 0 0 0 8px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+.cal-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
+.legend-item::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--cal-c); }
+.is-open { --cal-c: var(--ok); }
+.is-filling { --cal-c: var(--warn); }
+.is-full { --cal-c: var(--accent); }
+.is-past { --cal-c: var(--text-muted); }
+
+.cal {
+  --cal-row: 30px;
+  --cal-gutter: 56px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.cal-head, .cal-body {
+  display: grid;
+  grid-template-columns: var(--cal-gutter) repeat(5, minmax(0, 1fr));
+}
+.cal-head { border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.cal-dayhead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 4px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: default;
+}
+.cal-dow { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.cal-dom { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); width: 36px; height: 36px; line-height: 36px; border-radius: 50%; }
+.cal-dayhead.is-today .cal-dow { color: var(--accent); }
+.cal-dayhead.is-today .cal-dom { background: var(--accent); color: var(--accent-ink); }
+
+.cal-body { padding: 10px 0; position: relative; }
+.cal-gutter { position: relative; height: calc(var(--cal-row) * 16); }
+.cal-gutter span {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.cal-col {
+  position: relative;
+  height: calc(var(--cal-row) * 16);
+  border-left: 1px solid var(--border);
+  background-image:
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--border) 45%, transparent) 1px, transparent 1px);
+  background-size: 100% calc(var(--cal-row) * 2), 100% var(--cal-row);
+}
+.cal-col.is-today { background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
+.cal-col.is-editable { cursor: cell; }
+
+.cal-now { position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); z-index: 3; pointer-events: none; }
+.cal-now::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+.cal-ghost {
+  display: none;
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: calc(100% / 16);
+  border: 1.5px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+.cal-ghost.is-visible { display: flex; }
+
+.cal-block {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 3px 8px 3px 10px;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  color: var(--text);
+  background: color-mix(in srgb, var(--cal-c) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--cal-c) 45%, transparent);
+  border-left: 4px solid var(--cal-c);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.cal-block:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); z-index: 4; }
+.cal-block:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 4; }
+.cal-block.is-past { opacity: 0.55; }
+.cal-block-time { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-block-count { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-block.is-short { padding-top: 0; padding-bottom: 0; }
+.cal-block.is-narrow { padding-left: 8px; padding-right: 4px; font-size: 11.5px; }
+
+.cal-bar { display: block; height: 5px; border-radius: 999px; background: color-mix(in srgb, var(--cal-c) 22%, transparent); overflow: hidden; flex: none; }
+.cal-bar i { display: block; height: 100%; background: var(--cal-c); border-radius: 999px; transition: width 0.4s ease; }
+
+.cal.is-animate .cal-block { animation: block-in 0.35s ease backwards; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes block-in { from { opacity: 0; transform: scale(0.94) translateY(6px); } }
+
+/* Påmeldingsvindu */
+.signup-when { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin: -8px 0 14px; }
+.signup-capacity { margin-bottom: 14px; }
+.signup-capacity-text { font-size: 13.5px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+.signup-capacity .cal-bar { height: 8px; --cal-c: var(--ok); }
+.signup-capacity.is-filling .cal-bar { --cal-c: var(--warn); }
+.signup-capacity.is-full .cal-bar { --cal-c: var(--accent); }
+.signup-capacity.is-past .cal-bar { --cal-c: var(--text-muted); }
+.signup-note { background: var(--surface-2); border-left: 4px solid var(--info); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; }
+.signup-note-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin-bottom: 2px; }
+.signup-note p { white-space: pre-wrap; font-size: 14px; }
+.signup-closed { background: var(--surface-2); color: var(--text-muted); border-radius: 10px; padding: 10px 14px; font-size: 13.5px; font-weight: 600; }
+.signup-done { text-align: center; padding: 6px 0 0; }
+.signup-done h3 { font-size: 19px; margin: 10px 0 6px; }
+.signup-done p { color: var(--text-muted); font-size: 14px; }
+.signup-done .modal-actions { justify-content: center; }
+.signup-done-check { width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: flex; align-items: center; justify-content: center; animation: pop-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.signup-done-check svg { width: 28px; height: 28px; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes pop-in { from { transform: scale(0.4); opacity: 0; } }
+
+/* Avmeldingsforespørsler: lysende rødt tall */
+:root { --alert: #ff1f3d; }
+.cal-badge, .nav-badge-red {
+  background: var(--alert);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 10px 2px color-mix(in srgb, var(--alert) 70%, transparent);
+  animation: glow 1.8s ease-in-out infinite;
+}
+.cal-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  z-index: 5;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+.nav-item.is-active .nav-badge-red { background: var(--alert); color: #fff; }
+.nav-badge-red { margin-left: auto; }
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--surface), 0 0 6px 1px color-mix(in srgb, var(--alert) 60%, transparent); }
+  50% { box-shadow: 0 0 0 2px var(--surface), 0 0 14px 4px color-mix(in srgb, var(--alert) 85%, transparent); }
+}
+
+.cancel-section { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border); }
+.cancel-section .btn-ghost { padding-left: 0; }
+.cancel-section form { margin-top: 8px; }
+
+.reg-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.reg-item.has-request { background: color-mix(in srgb, var(--alert) 7%, transparent); border-radius: 10px; padding: 8px 10px; margin: 4px 0; border: 1px solid color-mix(in srgb, var(--alert) 40%, transparent); }
+.reg-request { margin-top: 8px; border-left: 3px solid var(--alert); padding-left: 10px; }
+.reg-request-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--alert); }
+.reg-request-reason { font-size: 14px; white-space: pre-wrap; margin: 2px 0 8px; overflow-wrap: anywhere; }
+.reg-request-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.reg-request-actions .btn { padding: 6px 12px; }
+
+/* Påmeldingsvindu: «ingen bekreftelse»-advarsel og kalenderknapper */
+.signup-warning {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 4px 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+}
+.signup-warning::before { content: "⚠ "; }
+.signup-done .signup-warning { color: var(--warn); font-size: 13.5px; }
+.signup-cal { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.signup-cal .btn { text-decoration: none; }
+.signup-cal-hint { margin: 10px 0 0; text-align: left; }
+
+/* Påmeldte (koordinator) */
+.reg-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+.reg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.reg-head h3 { font-size: 15px; }
+.reg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.reg-item { display: flex; flex-direction: column; align-items: stretch; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.reg-item:last-child { border-bottom: none; }
+.reg-info { display: flex; flex-direction: column; min-width: 0; }
+.reg-name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.reg-email { font-size: 12.5px; color: var(--text-muted); text-decoration: none; overflow-wrap: anywhere; }
+.reg-email:hover { text-decoration: underline; }
+.reg-remove { flex: none; padding: 6px 12px; }
+.reg-empty { padding: 12px 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cal.is-animate .cal-block, .cal-next-dot, .signup-done-check, .is-shake, .cal-badge, .nav-badge-red { animation: none; }
+}
+
+/* Kalender på smal skjerm: ukedagene blir faner, og kun valgt dag vises */
+@media (max-width: 720px) {
+  .cal { --cal-gutter: 44px; }
+  .cal-head { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .cal-gutter-head { display: none; }
+  .cal-dayhead { border-left: none; cursor: pointer; position: relative; padding: 8px 2px; }
+  .cal-dayhead.is-selected { background: var(--surface); box-shadow: inset 0 -3px 0 var(--accent); color: var(--text); }
+  .cal-dayhead.has-sessions:not(.is-selected)::after { content: ""; position: absolute; bottom: 4px; width: 5px; height: 5px; border-radius: 50%; background: var(--ok); }
+  .cal-body { grid-template-columns: var(--cal-gutter) minmax(0, 1fr); }
+  .cal-col:not(.is-selected) { display: none; }
+  .cal-block { font-size: 13px; padding-left: 12px; }
+  .field-row { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* =========================================================
    Toast
    ========================================================= */
 .toast {

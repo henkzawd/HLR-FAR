@@ -30,6 +30,10 @@
       </div>
     </div>
     <div class="topbar-actions">
+      <button id="roleBtn" class="pill-btn" type="button" aria-label="Bytt rolle" title="Bytt rolle" hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/></svg>
+        <span id="roleBtnLabel"></span>
+      </button>
       <button id="langToggle" class="pill-btn" type="button" aria-label="Bytt språk">
         <span data-i18n-lang-current>NO</span>
       </button>
@@ -46,6 +50,11 @@
       <button class="nav-item is-active" data-view="oversikt" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l9 6.2V21H3V9.2z"/><path d="M9 21v-7h6v7"/></svg>
         <span data-i18n="navOverview">Oversikt</span>
+      </button>
+      <button class="nav-item" data-view="kalender" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+        <span data-i18n="navCalendar">Påmelding</span>
+        <span class="nav-badge nav-badge-red" id="requestsBadge" hidden>0</span>
       </button>
       <button class="nav-item" data-view="grupper" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c.6-3.6 3-5.6 5.5-5.6s4.9 2 5.5 5.6"/><path d="M14.8 20c.5-2.9 2.2-4.6 4.2-4.6 1.7 0 3.2 1.1 3.9 3"/></svg>
@@ -125,6 +134,41 @@
         </div>
 
         <p class="fine-print" data-i18n="statusFinePrint">Endringer lagres for alle med lenken med det samme du trykker «Lagre».</p>
+      </section>
+
+      <!-- ---------- KALENDER / PÅMELDING ---------- -->
+      <section class="view" id="view-kalender">
+        <div class="view-head view-head-row">
+          <div>
+            <h1 data-i18n="calTitle">Påmelding til HLR-opplæring</h1>
+            <p class="view-desc" id="calDesc"></p>
+          </div>
+          <button class="btn btn-primary" id="addSessionBtn" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span data-i18n="calAddSession">Ny økt</span>
+          </button>
+        </div>
+
+        <div class="cal-toolbar">
+          <div class="cal-nav">
+            <button class="pill-btn icon-btn" id="calPrev" type="button" aria-label="Forrige uke"><svg viewBox="0 0 24 24" width="18" height="18"><polyline points="15 6 9 12 15 18"/></svg></button>
+            <button class="pill-btn" id="calToday" type="button" data-i18n="calToday">I dag</button>
+            <button class="pill-btn icon-btn" id="calNext" type="button" aria-label="Neste uke"><svg viewBox="0 0 24 24" width="18" height="18"><polyline points="9 6 15 12 9 18"/></svg></button>
+          </div>
+          <h2 class="cal-week-label" id="calWeekLabel" aria-live="polite"></h2>
+        </div>
+
+        <button class="cal-next-available" id="calNextAvailable" type="button" hidden></button>
+
+        <div class="cal-legend" id="calLegend" aria-hidden="true">
+          <span class="legend-item is-open" data-i18n="legendOpen">Ledig</span>
+          <span class="legend-item is-filling" data-i18n="legendFilling">Nesten fullt</span>
+          <span class="legend-item is-full" data-i18n="legendFull">Fullt</span>
+          <span class="legend-item is-past" data-i18n="legendPast">Passert</span>
+        </div>
+
+        <div class="cal" id="cal"></div>
+        <p class="empty-state" id="calEmptyHint" hidden></p>
       </section>
 
       <!-- ---------- GRUPPER ---------- -->
@@ -322,6 +366,189 @@
           <button type="button" class="btn btn-ghost" id="cancelDeficiencyCommentBtn" data-i18n="cancel">Avbryt</button>
           <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
         </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: coordinator – add/edit session ============ -->
+<div class="modal-overlay" id="sessionModalOverlay" hidden>
+  <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+    <h2 id="sessionModalTitle" data-i18n="sessionModalTitleAdd">Ny økt</h2>
+    <form id="sessionForm">
+      <label class="field">
+        <span data-i18n="fieldSessionDate">Dato</span>
+        <input type="date" id="sessionDateInput" required />
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span data-i18n="fieldStartTime">Starttidspunkt</span>
+          <select id="sessionStartInput"></select>
+        </label>
+        <label class="field">
+          <span data-i18n="fieldLength">Lengde</span>
+          <select id="sessionLengthInput"></select>
+        </label>
+      </div>
+      <p class="field-hint" id="sessionEndHint"></p>
+      <label class="field">
+        <span data-i18n="fieldCapacity">Maks antall påmeldte</span>
+        <input type="number" id="sessionCapacityInput" min="1" max="200" step="1" required />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldParticipantNote">Notat til deltakere (vises i påmeldingen)</span>
+        <textarea id="sessionParticipantNoteInput" rows="3"></textarea>
+      </label>
+      <label class="field">
+        <span data-i18n="fieldOrganizerNote">Notat til organisatorer (skjult for deltakere)</span>
+        <textarea id="sessionOrganizerNoteInput" rows="3"></textarea>
+      </label>
+      <p class="form-error" id="sessionFormError" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="deleteSessionBtn" hidden data-i18n="deleteSession">Slett økt</button>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelSessionBtn" data-i18n="cancel">Avbryt</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">Lagre</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="reg-section" id="sessionRegSection" hidden>
+      <div class="reg-head">
+        <h3 data-i18n="registrationsHeading">Påmeldte</h3>
+        <span class="badge badge-neutral" id="sessionRegCount"></span>
+      </div>
+      <ul class="reg-list" id="sessionRegList"></ul>
+      <p class="empty-state reg-empty" id="sessionRegEmpty" hidden data-i18n="registrationsEmpty">Ingen påmeldte ennå.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: participant – sign up for a session ============ -->
+<div class="modal-overlay" id="signupModalOverlay" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
+    <h2 id="signupTitle" data-i18n="signupTitle">Meld deg på</h2>
+    <p class="signup-when" id="signupWhen"></p>
+
+    <div class="signup-capacity">
+      <div class="signup-capacity-text" id="signupCapacityText"></div>
+      <div class="cal-bar"><i id="signupBarFill"></i></div>
+    </div>
+
+    <div class="signup-note" id="signupNote" hidden>
+      <div class="signup-note-label" data-i18n="signupNoteLabel">Informasjon fra arrangør</div>
+      <p id="signupNoteText"></p>
+    </div>
+
+    <form id="signupForm" novalidate>
+      <label class="field">
+        <span data-i18n="fieldFullName">Fullt navn</span>
+        <input type="text" id="signupNameInput" autocomplete="name" required />
+      </label>
+      <label class="field">
+        <span data-i18n="fieldEmail">E-post</span>
+        <input type="email" id="signupEmailInput" autocomplete="email" required />
+      </label>
+      <p class="signup-warning" data-i18n="signupNoReceipt">Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.</p>
+      <p class="form-error" id="signupError" role="alert" hidden></p>
+      <p class="signup-closed" id="signupClosed" hidden></p>
+      <div class="modal-actions">
+        <div></div>
+        <div class="modal-actions-right">
+          <button type="button" class="btn btn-ghost" id="cancelSignupBtn" data-i18n="close">Lukk</button>
+          <button type="submit" class="btn btn-primary" id="signupSubmitBtn" data-i18n="signupSubmit">Meld meg på</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="cancel-section" id="cancelSection">
+      <button type="button" class="btn btn-ghost" id="cancelToggleBtn" data-i18n="cancelToggle">Må du melde deg av?</button>
+      <form id="cancelForm" hidden novalidate>
+        <p class="field-hint" data-i18n="cancelIntro">Send en forespørsel til koordinatorene.</p>
+        <label class="field">
+          <span data-i18n="fieldCancelEmail">E-posten du meldte deg på med</span>
+          <input type="email" id="cancelEmailInput" autocomplete="email" />
+        </label>
+        <label class="field">
+          <span data-i18n="fieldCancelReason">Begrunnelse</span>
+          <textarea id="cancelReasonInput" rows="3" maxlength="500"></textarea>
+        </label>
+        <p class="form-error" id="cancelError" role="alert" hidden></p>
+        <div class="modal-actions">
+          <div></div>
+          <div class="modal-actions-right">
+            <button type="button" class="btn btn-ghost" id="cancelFormBackBtn" data-i18n="cancel">Avbryt</button>
+            <button type="submit" class="btn btn-primary" id="cancelSubmitBtn" data-i18n="cancelSubmit">Send forespørsel</button>
+          </div>
+        </div>
+      </form>
+      <p class="signup-closed" id="cancelSent" hidden data-i18n="cancelSent"></p>
+    </div>
+
+    <div class="signup-done" id="signupDone" hidden>
+      <div class="signup-done-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg></div>
+      <h3 data-i18n="signupDoneTitle">Du er påmeldt!</h3>
+      <p id="signupDoneText"></p>
+      <p class="signup-warning" data-i18n="signupNoReceipt">Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.</p>
+      <div class="signup-cal">
+        <button type="button" class="btn btn-outline" id="icsBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+          <span data-i18n="icsDownload">Last ned kalenderfil (.ics)</span>
+        </button>
+        <a class="btn btn-outline" id="outlookWebLink" href="#" target="_blank" rel="noopener noreferrer" data-i18n="outlookWeb">Åpne i Outlook på nett</a>
+      </div>
+      <p class="field-hint signup-cal-hint" data-i18n="icsHint"></p>
+      <div class="modal-actions">
+        <div></div>
+        <button type="button" class="btn btn-primary" id="signupDoneCloseBtn" data-i18n="close">Lukk</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POPUP: velg rolle / koordinator-passord ============ -->
+<div class="modal-overlay login-overlay" id="loginOverlay" hidden>
+  <div class="modal login-modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="login-top">
+      <span class="login-brand">
+        <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true">
+          <path d="M24 41.5s-16.5-9.9-20.6-20C.6 14.6 3.6 7 11 5.6c4.6-.9 8.9 1.2 11.4 4.8l1.6 2.3 1.6-2.3C28 5.7 32.3 3.6 36.9 4.6 44.3 6 47.3 13.6 44.6 21.5c-4.1 10.1-20.6 20-20.6 20z" fill="var(--accent)"/>
+          <path d="M4 24h8l3-8 5 16 4-12 3 6h17" fill="none" stroke="var(--accent-ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="appTitle">HLR i FAR</span>
+      </span>
+      <button id="loginLangToggle" class="pill-btn" type="button" aria-label="Bytt språk"><span data-i18n-lang-current>NO</span></button>
+    </div>
+
+    <div id="loginChoose">
+      <h2 id="loginTitle" data-i18n="loginTitle">Velkommen</h2>
+      <p class="login-sub" data-i18n="loginPrompt">Hvem er du?</p>
+      <button type="button" class="role-card" data-role-choice="participant">
+        <span class="role-card-icon" aria-hidden="true">🙋</span>
+        <span class="role-card-text">
+          <strong data-i18n="roleParticipant">Deltaker</strong>
+          <small data-i18n="loginParticipantDesc">Se kalenderen og meld deg på HLR-opplæring</small>
+        </span>
+      </button>
+      <button type="button" class="role-card" data-role-choice="coordinator">
+        <span class="role-card-icon" aria-hidden="true">🔑</span>
+        <span class="role-card-text">
+          <strong data-i18n="roleCoordinator">Koordinator</strong>
+          <small data-i18n="loginCoordinatorDesc">Full tilgang – krever passord</small>
+        </span>
+      </button>
+    </div>
+
+    <form id="loginForm" hidden>
+      <h2 data-i18n="loginCoordinatorTitle">Koordinator-innlogging</h2>
+      <label class="field">
+        <span data-i18n="loginPasswordLabel">Passord</span>
+        <input type="password" id="loginPassword" autocomplete="current-password" required />
+      </label>
+      <p class="form-error" id="loginError" role="alert" hidden data-i18n="loginWrong">Feil passord. Prøv igjen.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="loginBackBtn" data-i18n="loginBack">Tilbake</button>
+        <button type="submit" class="btn btn-primary" data-i18n="loginSubmit">Logg inn</button>
       </div>
     </form>
   </div>
