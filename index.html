@@ -54,6 +54,7 @@
       <button class="nav-item" data-view="kalender" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
         <span data-i18n="navCalendar">Påmelding</span>
+        <span class="nav-badge nav-badge-red" id="requestsBadge" hidden>0</span>
       </button>
       <button class="nav-item" data-view="grupper" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.6"/><path d="M2.5 20c.6-3.6 3-5.6 5.5-5.6s4.9 2 5.5 5.6"/><path d="M14.8 20c.5-2.9 2.2-4.6 4.2-4.6 1.7 0 3.2 1.1 3.9 3"/></svg>
@@ -458,6 +459,30 @@
         </div>
       </div>
     </form>
+
+    <div class="cancel-section" id="cancelSection">
+      <button type="button" class="btn btn-ghost" id="cancelToggleBtn" data-i18n="cancelToggle">Må du melde deg av?</button>
+      <form id="cancelForm" hidden novalidate>
+        <p class="field-hint" data-i18n="cancelIntro">Send en forespørsel til koordinatorene.</p>
+        <label class="field">
+          <span data-i18n="fieldCancelEmail">E-posten du meldte deg på med</span>
+          <input type="email" id="cancelEmailInput" autocomplete="email" />
+        </label>
+        <label class="field">
+          <span data-i18n="fieldCancelReason">Begrunnelse</span>
+          <textarea id="cancelReasonInput" rows="3" maxlength="500"></textarea>
+        </label>
+        <p class="form-error" id="cancelError" role="alert" hidden></p>
+        <div class="modal-actions">
+          <div></div>
+          <div class="modal-actions-right">
+            <button type="button" class="btn btn-ghost" id="cancelFormBackBtn" data-i18n="cancel">Avbryt</button>
+            <button type="submit" class="btn btn-primary" id="cancelSubmitBtn" data-i18n="cancelSubmit">Send forespørsel</button>
+          </div>
+        </div>
+      </form>
+      <p class="signup-closed" id="cancelSent" hidden data-i18n="cancelSent"></p>
+    </div>
 
     <div class="signup-done" id="signupDone" hidden>
       <div class="signup-done-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg></div>

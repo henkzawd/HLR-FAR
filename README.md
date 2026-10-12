@@ -97,6 +97,13 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
   over alle som er påmeldt (navn og e-post).
 - **Melde av en deltaker** (f.eks. hvis noen er syke eller meldte seg på
   feil økt): åpne økten og trykk **«Meld av»** ved navnet.
+- **Avmeldingsforespørsler:** deltakere kan ikke melde seg av selv, men de
+  kan sende en forespørsel med begrunnelse (se under). Da dukker det opp et
+  **lysende rødt tall** øverst til høyre på økten i kalenderen, og et rødt
+  tall ved «Påmelding» i menyen. Åpne økten: den som har bedt om avmelding
+  ligger øverst, med begrunnelsen. Trykk **«Godkjenn»** for å melde
+  vedkommende av (plassen blir ledig, og det røde tallet forsvinner), eller
+  **«Avslå»** for å la vedkommende stå påmeldt.
 - **Slette en økt:** åpne økten og trykk **«Slett økt»**. Da slettes også
   alle påmeldinger til den.
 - Du kan ikke sette maks antall lavere enn antall som allerede er påmeldt —
@@ -112,8 +119,14 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
   ledige plasser.
 - Det sendes **ikke** e-postbekreftelse. Deltakeren får en bekreftelse på
   skjermen, og koordinatorene kan se e-postadressen i påmeldingslisten.
-- Samme e-postadresse kan bare melde seg på én gang per økt. En deltaker
-  kan ikke melde seg av selv — det gjør en koordinator.
+- Samme e-postadresse kan bare melde seg på én gang per økt.
+- **Må du melde deg av?** Åpne økten og trykk **«Må du melde deg av?»**.
+  Skriv inn e-posten du meldte deg på med, og en kort begrunnelse, og trykk
+  **«Send forespørsel»**. Forespørselen går til koordinatorene. Du er
+  fortsatt påmeldt helt til en koordinator har godkjent den. (Dette hindrer
+  at noen kan melde av andre ved å skrive inn en e-post som ikke er deres
+  egen.) Det går også an å sende forespørsel når økten er full, men ikke
+  etter at økten er over.
 
 ## Personvern
 

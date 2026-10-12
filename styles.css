@@ -843,7 +843,6 @@ body[data-role="participant"] .nav { display: none; }
   border: 1px solid color-mix(in srgb, var(--cal-c) 45%, transparent);
   border-left: 4px solid var(--cal-c);
   border-radius: 8px;
-  overflow: hidden;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
@@ -881,12 +880,55 @@ body[data-role="participant"] .nav { display: none; }
 .signup-done-check svg { width: 28px; height: 28px; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 @keyframes pop-in { from { transform: scale(0.4); opacity: 0; } }
 
+/* Avmeldingsforespørsler: lysende rødt tall */
+:root { --alert: #ff1f3d; }
+.cal-badge, .nav-badge-red {
+  background: var(--alert);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 10px 2px color-mix(in srgb, var(--alert) 70%, transparent);
+  animation: glow 1.8s ease-in-out infinite;
+}
+.cal-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  z-index: 5;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+}
+.nav-item.is-active .nav-badge-red { background: var(--alert); color: #fff; }
+.nav-badge-red { margin-left: auto; }
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 2px var(--surface), 0 0 6px 1px color-mix(in srgb, var(--alert) 60%, transparent); }
+  50% { box-shadow: 0 0 0 2px var(--surface), 0 0 14px 4px color-mix(in srgb, var(--alert) 85%, transparent); }
+}
+
+.cancel-section { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border); }
+.cancel-section .btn-ghost { padding-left: 0; }
+.cancel-section form { margin-top: 8px; }
+
+.reg-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.reg-item.has-request { background: color-mix(in srgb, var(--alert) 7%, transparent); border-radius: 10px; padding: 8px 10px; margin: 4px 0; border: 1px solid color-mix(in srgb, var(--alert) 40%, transparent); }
+.reg-request { margin-top: 8px; border-left: 3px solid var(--alert); padding-left: 10px; }
+.reg-request-label { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--alert); }
+.reg-request-reason { font-size: 14px; white-space: pre-wrap; margin: 2px 0 8px; overflow-wrap: anywhere; }
+.reg-request-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.reg-request-actions .btn { padding: 6px 12px; }
+
 /* Påmeldte (koordinator) */
 .reg-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
 .reg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .reg-head h3 { font-size: 15px; }
 .reg-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.reg-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.reg-item { display: flex; flex-direction: column; align-items: stretch; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .reg-item:last-child { border-bottom: none; }
 .reg-info { display: flex; flex-direction: column; min-width: 0; }
 .reg-name { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
@@ -896,7 +938,7 @@ body[data-role="participant"] .nav { display: none; }
 .reg-empty { padding: 12px 0; }
 
 @media (prefers-reduced-motion: reduce) {
-  .cal.is-animate .cal-block, .cal-next-dot, .signup-done-check, .is-shake { animation: none; }
+  .cal.is-animate .cal-block, .cal-next-dot, .signup-done-check, .is-shake, .cal-badge, .nav-badge-red { animation: none; }
 }
 
 /* Kalender på smal skjerm: ukedagene blir faner, og kun valgt dag vises */

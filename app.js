@@ -171,6 +171,20 @@
       signupErrGone: "Denne økten finnes ikke lenger.",
       signupClosedPast: "Påmeldingen er stengt – økten er ferdig.",
       signupClosedFull: "Økten er full, så påmeldingen er stengt.",
+      cancelToggle: "Må du melde deg av?",
+      cancelIntro: "Send en forespørsel til koordinatorene. Du er fortsatt påmeldt til en koordinator har godkjent avmeldingen.",
+      fieldCancelEmail: "E-posten du meldte deg på med",
+      fieldCancelReason: "Begrunnelse",
+      cancelSubmit: "Send forespørsel",
+      cancelSent: "Forespørselen er sendt til koordinatorene. Du er fortsatt påmeldt til en koordinator har godkjent avmeldingen.",
+      cancelErrReason: "Skriv en kort begrunnelse.",
+      cancelErrNotRegistered: "Fant ingen påmelding med denne e-postadressen til denne økten.",
+      cancelErrDuplicate: "Du har allerede sendt en avmeldingsforespørsel for denne økten. Koordinatorene har den til behandling.",
+      calCancelRequests: "Avmeldingsforespørsler: {n}",
+      requestLabel: "Ber om avmelding",
+      approveCancel: "Godkjenn",
+      declineCancel: "Avslå",
+      toastDeclined: "Forespørselen er avslått",
       guideSections: [
         {
           title: "Forberedelse",
@@ -374,6 +388,20 @@
       signupErrGone: "This session no longer exists.",
       signupClosedPast: "Sign-up is closed – the session has ended.",
       signupClosedFull: "The session is full, so sign-up is closed.",
+      cancelToggle: "Need to cancel?",
+      cancelIntro: "Send a request to the coordinators. You stay signed up until a coordinator has approved the cancellation.",
+      fieldCancelEmail: "The email you signed up with",
+      fieldCancelReason: "Reason",
+      cancelSubmit: "Send request",
+      cancelSent: "The request has been sent to the coordinators. You stay signed up until a coordinator has approved the cancellation.",
+      cancelErrReason: "Please write a short reason.",
+      cancelErrNotRegistered: "No sign-up found for this email address in this session.",
+      cancelErrDuplicate: "You have already sent a cancellation request for this session. The coordinators are reviewing it.",
+      calCancelRequests: "Cancellation requests: {n}",
+      requestLabel: "Requests cancellation",
+      approveCancel: "Approve",
+      declineCancel: "Decline",
+      toastDeclined: "Request declined",
       guideSections: [
         {
           title: "Preparation",
@@ -506,6 +534,9 @@
     openSessionDraft: null, // {date, start} når en ny økt opprettes ved å trykke i kalenderen
     openSignupId: null,
     registrationsUnsub: null,
+    requestsUnsub: null,
+    modalRegs: [],
+    modalReqs: [],
     organizerNoteLoaded: false,
     coordinatorSubsStarted: false,
   };
@@ -1465,13 +1496,16 @@
         var label = status === "full" ? t("calFull") + " · " + countText : t("calRegisteredShort", { n: count, max: s.capacity });
         var short = (s.halfHours || 1) === 1;
         var narrow = p.lanes > 1; // overlappende økter deler plassen – da vises kun det viktigste
-        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + ", " + t("calRegisteredOf", { n: count, max: s.capacity });
+        var requests = coordinator ? (s.cancelRequestCount || 0) : 0;
+        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + ", " + t("calRegisteredOf", { n: count, max: s.capacity }) +
+          (requests ? ", " + t("calCancelRequests", { n: requests }) : "");
         if (narrow) label = status === "full" ? t("calFull") : countText;
         html +=
           '<button type="button" class="cal-block is-' + status + (short ? " is-short" : "") + (narrow ? " is-narrow" : "") + '" data-id="' + esc(s.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" ' +
           'style="top:' + top + "%;height:" + height + "%;left:calc(" + (p.lane * laneW) + "% + 2px);width:calc(" + laneW + "% - 4px);--i:" + n + '">' +
           '<span class="cal-block-time">' + esc(short ? s.start + " · " + countText : narrow ? s.start : sessionTimeRange(s)) + "</span>" +
           (short ? "" : '<span class="cal-block-count">' + esc(label) + "</span>" + '<span class="cal-bar"><i style="width:' + pct + '%"></i></span>') +
+          (requests ? '<span class="cal-badge" aria-hidden="true">' + requests + "</span>" : "") +
           "</button>";
       });
       if (iso === todayISO && nowMin >= CAL_START_MIN && nowMin <= CAL_END_MIN) {
@@ -1481,6 +1515,11 @@
       html += "</div>";
     });
     html += "</div>";
+
+    var totalRequests = coordinator ? state.sessions.reduce(function (sum, x) { return sum + (x.cancelRequestCount || 0); }, 0) : 0;
+    var navBadge = $("#requestsBadge");
+    navBadge.textContent = String(totalRequests);
+    navBadge.hidden = totalRequests === 0;
 
     cal.classList.toggle("is-animate", state.calAnimate);
     state.calAnimate = false;
@@ -1567,6 +1606,11 @@
     $("#signupDone").hidden = true;
     $("#signupError").hidden = true;
     $("#signupSubmitBtn").disabled = false;
+    $("#cancelForm").reset();
+    $("#cancelForm").hidden = true;
+    $("#cancelError").hidden = true;
+    $("#cancelSent").hidden = true;
+    $("#cancelToggleBtn").hidden = false;
     $("#signupModalOverlay").hidden = false;
     updateSignupModal();
     if (!$("#signupNameInput").disabled) $("#signupNameInput").focus();
@@ -1601,6 +1645,8 @@
     $("#signupNameInput").disabled = !!closedMsg;
     $("#signupEmailInput").disabled = !!closedMsg;
     $("#signupSubmitBtn").hidden = !!closedMsg;
+    // Avmeldingsforespørsel kan sendes også når økten er full, men ikke etter at den er over.
+    $("#cancelSection").hidden = status === "past" || !$("#signupDone").hidden;
   }
 
   function showSignupError(msg) {
@@ -1650,6 +1696,7 @@
         $("#signupForm").hidden = true;
         $("#signupDone").hidden = false;
         $("#signupDoneText").textContent = t("signupDoneText", { when: sessionWhenLabel(s) });
+        updateSignupModal();
       })
       .catch(function (err) {
         var map = {
@@ -1663,6 +1710,67 @@
         showSignupError(t(key || "toastError"));
       })
       .then(function () { $("#signupSubmitBtn").disabled = false; });
+  }
+
+  // Deltakere kan ikke melde noen av direkte. De sender en forespørsel med begrunnelse,
+  // og en koordinator godkjenner eller avslår den.
+  function requestCancellation(sessionId, email, reason) {
+    var key = emailKey(email);
+    var sRef = sessionsCol().doc(sessionId);
+    var rRef = registrationsCol(sessionId).doc(key);
+    var qRef = cancelRequestsCol(sessionId).doc(key);
+    return state.db.runTransaction(function (tx) {
+      return tx.get(sRef).then(function (sSnap) {
+        if (!sSnap.exists) throw new Error("session-gone");
+        var s = sSnap.data();
+        s.id = sessionId;
+        if (sessionIsPast(s)) throw new Error("session-past");
+        return tx.get(rRef).then(function (rSnap) {
+          if (!rSnap.exists) throw new Error("not-registered");
+          return tx.get(qRef).then(function (qSnap) {
+            if (qSnap.exists) throw new Error("request-duplicate");
+            var r = rSnap.data();
+            tx.set(qRef, { name: r.name || "", email: r.email || email, reason: reason, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            tx.update(sRef, { cancelRequestCount: (s.cancelRequestCount || 0) + 1 });
+          });
+        });
+      });
+    });
+  }
+
+  function showCancelError(msg) {
+    var el = $("#cancelError");
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  function submitCancelForm(ev) {
+    ev.preventDefault();
+    if (!requireDb() || !state.openSignupId) return;
+    var email = $("#cancelEmailInput").value.trim();
+    var reason = $("#cancelReasonInput").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showCancelError(t("signupErrEmail")); $("#cancelEmailInput").focus(); return; }
+    if (!reason) { showCancelError(t("cancelErrReason")); $("#cancelReasonInput").focus(); return; }
+
+    $("#cancelError").hidden = true;
+    $("#cancelSubmitBtn").disabled = true;
+    requestCancellation(state.openSignupId, email, reason)
+      .then(function () {
+        $("#cancelForm").hidden = true;
+        $("#cancelSent").hidden = false;
+      })
+      .catch(function (err) {
+        var map = {
+          "not-registered": "cancelErrNotRegistered",
+          "request-duplicate": "cancelErrDuplicate",
+          "session-past": "signupErrPast",
+          "session-gone": "signupErrGone",
+        };
+        var key = err && map[err.message];
+        if (!key) console.error(err);
+        showCancelError(t(key || "toastError"));
+      })
+      .then(function () { $("#cancelSubmitBtn").disabled = false; });
   }
 
   /* ---------- Koordinator: opprett / rediger økt ---------- */
@@ -1791,9 +1899,9 @@
     if (!s || !requireDb()) return;
     var n = sessionCount(s);
     if (!confirm(n > 0 ? t("confirmDeleteSession", { n: n }) : t("confirmDeleteSessionEmpty"))) return;
-    registrationsCol(s.id).get().then(function (snap) {
+    Promise.all([registrationsCol(s.id).get(), cancelRequestsCol(s.id).get()]).then(function (snaps) {
       var batch = state.db.batch();
-      snap.docs.forEach(function (d) { batch.delete(d.ref); });
+      snaps.forEach(function (snap) { snap.docs.forEach(function (d) { batch.delete(d.ref); }); });
       batch.delete(sessionPrivateCol().doc(s.id));
       batch.delete(sessionsCol().doc(s.id));
       return batch.commit();
@@ -1805,28 +1913,43 @@
 
   function unsubscribeRegistrations() {
     if (state.registrationsUnsub) { state.registrationsUnsub(); state.registrationsUnsub = null; }
+    if (state.requestsUnsub) { state.requestsUnsub(); state.requestsUnsub = null; }
+    state.modalRegs = [];
+    state.modalReqs = [];
     $("#sessionRegList").innerHTML = "";
   }
   function subscribeRegistrations(sessionId) {
     unsubscribeRegistrations();
     if (!state.dbReady) return;
+    function onErr(err) { console.error(err); showBanner("bannerPermission"); }
     state.registrationsUnsub = registrationsCol(sessionId).orderBy("createdAt").onSnapshot(function (snap) {
-      renderRegistrations(sessionId, snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }));
-    }, function (err) {
-      console.error(err);
-      showBanner("bannerPermission");
-    });
+      state.modalRegs = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      renderRegistrations(sessionId);
+    }, onErr);
+    state.requestsUnsub = cancelRequestsCol(sessionId).onSnapshot(function (snap) {
+      state.modalReqs = snap.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); });
+      renderRegistrations(sessionId);
+    }, onErr);
   }
 
-  function renderRegistrations(sessionId, regs) {
+  function renderRegistrations(sessionId) {
     var s = findSession(sessionId);
+    var regs = state.modalRegs;
+    var reqById = {};
+    state.modalReqs.forEach(function (q) { reqById[q.id] = q; });
     var list = $("#sessionRegList");
     list.innerHTML = "";
     $("#sessionRegCount").textContent = regs.length + (s ? "/" + s.capacity : "");
     $("#sessionRegEmpty").hidden = regs.length > 0;
+
+    // Påmeldte med åpen avmeldingsforespørsel vises øverst
+    regs = regs.slice().sort(function (a, b) { return (reqById[b.id] ? 1 : 0) - (reqById[a.id] ? 1 : 0); });
     regs.forEach(function (r) {
+      var req = reqById[r.id];
       var li = document.createElement("li");
-      li.className = "reg-item";
+      li.className = "reg-item" + (req ? " has-request" : "");
+      var row = document.createElement("div");
+      row.className = "reg-row";
       var info = document.createElement("div");
       info.className = "reg-info";
       var nameEl = document.createElement("span");
@@ -1843,26 +1966,78 @@
       btn.className = "btn btn-danger reg-remove";
       btn.textContent = t("removeRegistration");
       btn.addEventListener("click", function () { removeRegistration(sessionId, r); });
-      li.appendChild(info);
-      li.appendChild(btn);
+      row.appendChild(info);
+      row.appendChild(btn);
+      li.appendChild(row);
+
+      if (req) {
+        var box = document.createElement("div");
+        box.className = "reg-request";
+        var label = document.createElement("div");
+        label.className = "reg-request-label";
+        label.textContent = t("requestLabel") + (req.createdAt && req.createdAt.toDate ? " · " + formatDateTime(req.createdAt.toDate()) : "");
+        var reason = document.createElement("p");
+        reason.className = "reg-request-reason";
+        reason.textContent = req.reason || "";
+        var actions = document.createElement("div");
+        actions.className = "reg-request-actions";
+        var approve = document.createElement("button");
+        approve.type = "button";
+        approve.className = "btn btn-primary";
+        approve.textContent = t("approveCancel");
+        approve.addEventListener("click", function () { removeRegistration(sessionId, r); });
+        var decline = document.createElement("button");
+        decline.type = "button";
+        decline.className = "btn btn-outline";
+        decline.textContent = t("declineCancel");
+        decline.addEventListener("click", function () { declineCancelRequest(sessionId, r.id); });
+        actions.appendChild(approve);
+        actions.appendChild(decline);
+        box.appendChild(label);
+        box.appendChild(reason);
+        box.appendChild(actions);
+        li.appendChild(box);
+      }
       list.appendChild(li);
     });
   }
 
+  // Melder av en deltaker (direkte, eller ved å godkjenne en forespørsel).
+  // Rydder også bort en eventuell forespørsel og holder tellerne riktige.
   function removeRegistration(sessionId, reg) {
     if (!requireDb()) return;
     if (!confirm(t("confirmRemoveRegistration", { name: reg.name || reg.email }))) return;
     var sRef = sessionsCol().doc(sessionId);
     var rRef = registrationsCol(sessionId).doc(reg.id);
+    var qRef = cancelRequestsCol(sessionId).doc(reg.id);
     state.db.runTransaction(function (tx) {
       return tx.get(sRef).then(function (sSnap) {
         return tx.get(rRef).then(function (rSnap) {
-          if (!rSnap.exists) return;
-          tx.delete(rRef);
-          if (sSnap.exists) tx.update(sRef, { registeredCount: Math.max(0, (sSnap.data().registeredCount || 0) - 1) });
+          return tx.get(qRef).then(function (qSnap) {
+            var upd = {};
+            var sData = sSnap.exists ? sSnap.data() : {};
+            if (rSnap.exists) { tx.delete(rRef); upd.registeredCount = Math.max(0, (sData.registeredCount || 0) - 1); }
+            if (qSnap.exists) { tx.delete(qRef); upd.cancelRequestCount = Math.max(0, (sData.cancelRequestCount || 0) - 1); }
+            if (sSnap.exists && Object.keys(upd).length) tx.update(sRef, upd);
+          });
         });
       });
     }).then(function () { toast(t("toastUnregistered")); }).catch(onDbError);
+  }
+
+  function declineCancelRequest(sessionId, regId) {
+    if (!requireDb()) return;
+    var sRef = sessionsCol().doc(sessionId);
+    var qRef = cancelRequestsCol(sessionId).doc(regId);
+    state.db.runTransaction(function (tx) {
+      return tx.get(sRef).then(function (sSnap) {
+        return tx.get(qRef).then(function (qSnap) {
+          if (!qSnap.exists) return;
+          tx.delete(qRef);
+          if (sSnap.exists) tx.update(sRef, { cancelRequestCount: Math.max(0, (sSnap.data().cancelRequestCount || 0) - 1) });
+        });
+      });
+    }).then(function () { toast(t("toastDeclined")); }).catch(onDbError);
   }
 
   /* ============================================================
@@ -1877,6 +2052,7 @@
   function sessionsCol() { return state.db.collection("sessions"); }
   function sessionPrivateCol() { return state.db.collection("sessionPrivate"); }
   function registrationsCol(sessionId) { return sessionsCol().doc(sessionId).collection("registrations"); }
+  function cancelRequestsCol(sessionId) { return sessionsCol().doc(sessionId).collection("cancelRequests"); }
 
   function requireDb() {
     if (state.dbReady) return true;
@@ -2126,6 +2302,16 @@
     $("#deleteSessionBtn").addEventListener("click", deleteSession);
     $("#sessionModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeSessionModal(); });
 
+    $("#cancelToggleBtn").addEventListener("click", function () {
+      $("#cancelToggleBtn").hidden = true;
+      $("#cancelForm").hidden = false;
+      $("#cancelEmailInput").focus();
+    });
+    $("#cancelFormBackBtn").addEventListener("click", function () {
+      $("#cancelForm").hidden = true;
+      $("#cancelToggleBtn").hidden = false;
+    });
+    $("#cancelForm").addEventListener("submit", submitCancelForm);
     $("#signupForm").addEventListener("submit", submitSignupForm);
     $("#cancelSignupBtn").addEventListener("click", closeSignupModal);
     $("#signupDoneCloseBtn").addEventListener("click", closeSignupModal);
