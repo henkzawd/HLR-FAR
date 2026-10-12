@@ -941,6 +941,22 @@ body[data-role="participant"] .nav { display: none; }
 .signup-cal .btn { text-decoration: none; }
 .signup-cal-hint { margin: 10px 0 0; text-align: left; }
 
+/* Tilknytning (gruppe-farge) */
+.group-chip-sm { font-size: 10px; padding: 1px 6px; min-width: 0; border-radius: 5px; margin-right: 6px; vertical-align: 1px; }
+.cal-block.has-aff {
+  background: color-mix(in srgb, var(--aff) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--aff) 50%, transparent);
+  border-left-color: var(--aff);
+}
+.cal-block-time .group-chip { box-shadow: 0 0 0 1px color-mix(in srgb, var(--surface) 60%, transparent); }
+.cal-legend { align-items: center; }
+.legend-label { font-weight: 600; }
+.cal-aff-legend { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-left: 8px; }
+.cal-aff-legend .group-chip-sm { margin-right: 0; font-size: 11px; padding: 2px 8px; }
+.cal-aff-legend:empty { display: none; }
+.signup-aff { display: flex; align-items: center; gap: 10px; margin: -6px 0 10px; font-weight: 600; font-size: 15px; }
+.signup-aff .group-chip { font-size: 12px; padding: 4px 10px; }
+
 /* Rom */
 .signup-room {
   margin: -6px 0 14px;

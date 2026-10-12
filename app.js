@@ -114,7 +114,7 @@
       loginWrong: "Feil passord. Prøv igjen.",
       navCalendar: "Påmelding",
       calTitle: "Påmelding til HLR-opplæring",
-      calDescParticipant: "Velg en ledig økt i kalenderen for å melde deg på. Grønne økter har ledige plasser.",
+      calDescParticipant: "Velg en økt i kalenderen for å melde deg på. Fargen på økten viser hvilken gruppe den gjelder, og stolpen viser hvor mange plasser som er ledige.",
       calDescCoordinator: "Trykk et tomt felt i kalenderen for å opprette en ny økt, eller trykk på en økt for å redigere den og se hvem som er påmeldt.",
       calAddSession: "Ny økt",
       calPrev: "Forrige uke",
@@ -179,6 +179,12 @@
       removeSavedRoom: "Fjern {room} fra lagrede rom",
       toastRoomSaved: "Rommet er lagret",
       signupRoomLabel: "Rom",
+      fieldAffiliation: "Tilknytning (gruppe)",
+      affNone: "Ingen tilknytning",
+      affHint: "Velg blant gruppene dine. Nye grupper (f.eks. OUS eller LVB) legger du til under «Grupper» i menyen.",
+      legendSpots: "Plasser:",
+      legendGroup: "Gruppe:",
+      affiliationFor: "For",
       signupErrName: "Skriv fullt navn (fornavn og etternavn).",
       signupErrEmail: "Skriv en gyldig e-postadresse.",
       signupErrFull: "Beklager, økten ble full før du rakk å melde deg på.",
@@ -347,7 +353,7 @@
       loginWrong: "Wrong password. Please try again.",
       navCalendar: "Sign-up",
       calTitle: "Sign up for CPR training",
-      calDescParticipant: "Pick an available session in the calendar to sign up. Green sessions have spots left.",
+      calDescParticipant: "Pick a session in the calendar to sign up. The colour shows which group the session is for, and the bar shows how many spots are left.",
       calDescCoordinator: "Click an empty spot in the calendar to create a new session, or click a session to edit it and see who has signed up.",
       calAddSession: "New session",
       calPrev: "Previous week",
@@ -412,6 +418,12 @@
       removeSavedRoom: "Remove {room} from saved rooms",
       toastRoomSaved: "Room saved",
       signupRoomLabel: "Room",
+      fieldAffiliation: "Affiliation (group)",
+      affNone: "No affiliation",
+      affHint: "Choose among your groups. Add new groups (e.g. OUS or LVB) under “Groups” in the menu.",
+      legendSpots: "Spots:",
+      legendGroup: "Group:",
+      affiliationFor: "For",
       signupErrName: "Enter your full name (first and last name).",
       signupErrEmail: "Enter a valid email address.",
       signupErrFull: "Sorry, the session filled up before you could sign up.",
@@ -499,6 +511,19 @@
     return name.slice(0, 6).toUpperCase();
   }
 
+  // Tilknytning (gruppe) lagres på selve økten med navn og farge, slik at deltakere
+  // (som aldri leser gruppelisten) likevel ser riktig farge. Fargen valideres før bruk.
+  function safeColor(c) { return /^#[0-9a-fA-F]{6}$/.test(c || "") ? c : null; }
+  function sessionAffiliation(s) {
+    var color = safeColor(s.affiliationColor);
+    var label = (s.affiliation || "").trim();
+    if (!color || !label) return null;
+    return { id: s.affiliationId || "", label: label, name: (s.affiliationName || label).trim(), color: color };
+  }
+  function affChipHtml(aff, extraClass) {
+    return '<span class="group-chip ' + (extraClass || "") + '" style="--gc:' + aff.color + '">' + esc(aff.label) + "</span>";
+  }
+
   var GUIDE_SEED = T.no.guideSections.map(function (sec, i) {
     var en = (T.en.guideSections && T.en.guideSections[i]) || {};
     return {
@@ -560,6 +585,7 @@
     role: null, // "participant" | "coordinator" – satt når man har valgt i popupen
     sessions: [],
     rooms: [], // lagrede rom (kun koordinatorer)
+    sessionAff: null, // valgt tilknytning i økt-vinduet: {id, label, name, color}
     calWeekStart: null, // ISO-dato for mandagen i uken som vises
     calDayIdx: 0, // valgt ukedag (0 = mandag) – brukes i mobilvisning
     calAnimate: false,
@@ -804,6 +830,7 @@
       grid.appendChild(card);
     });
     renderLogGroupPicker();
+    renderSessionAffPicker();
   }
 
   function openGroupModal(id) {
@@ -1538,13 +1565,14 @@
         var narrow = p.lanes > 1; // overlappende økter deler plassen – da vises kun det viktigste
         var requests = coordinator ? (s.cancelRequestCount || 0) : 0;
         var room = (s.room || "").trim();
-        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + (room ? ", " + t("signupRoomLabel") + " " + room : "") + ", " + t("calRegisteredOf", { n: count, max: s.capacity }) +
+        var aff = sessionAffiliation(s);
+        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + (aff ? ", " + aff.name : "") + (room ? ", " + t("signupRoomLabel") + " " + room : "") + ", " + t("calRegisteredOf", { n: count, max: s.capacity }) +
           (requests ? ", " + t("calCancelRequests", { n: requests }) : "");
         if (narrow) label = status === "full" ? t("calFull") : countText;
         html +=
-          '<button type="button" class="cal-block is-' + status + (short ? " is-short" : "") + (narrow ? " is-narrow" : "") + (room ? " has-room" : "") + '" data-id="' + esc(s.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" ' +
-          'style="top:' + top + "%;height:" + height + "%;left:calc(" + (p.lane * laneW) + "% + 2px);width:calc(" + laneW + "% - 4px);--i:" + n + '">' +
-          '<span class="cal-block-time">' + esc(short ? s.start + " · " + countText : narrow ? s.start : sessionTimeRange(s)) + "</span>" +
+          '<button type="button" class="cal-block is-' + status + (short ? " is-short" : "") + (narrow ? " is-narrow" : "") + (room ? " has-room" : "") + (aff ? " has-aff" : "") + '" data-id="' + esc(s.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" ' +
+          'style="' + (aff ? "--aff:" + aff.color + ";" : "") + 'top:' + top + "%;height:" + height + "%;left:calc(" + (p.lane * laneW) + "% + 2px);width:calc(" + laneW + "% - 4px);--i:" + n + '">' +
+          '<span class="cal-block-time">' + (aff ? affChipHtml(aff, "group-chip-sm") : "") + esc(short ? s.start + " · " + countText : narrow ? s.start : sessionTimeRange(s)) + "</span>" +
           (room ? '<span class="cal-block-room">📍 ' + esc(room) + "</span>" : "") +
           (short ? "" : '<span class="cal-block-count">' + esc(label) + "</span>" + '<span class="cal-bar"><i style="width:' + pct + '%"></i></span>') +
           (requests ? '<span class="cal-badge" aria-hidden="true">' + requests + "</span>" : "") +
@@ -1566,6 +1594,18 @@
     cal.classList.toggle("is-animate", state.calAnimate);
     state.calAnimate = false;
     cal.innerHTML = html;
+
+    var seenAff = {};
+    days.forEach(function (d) {
+      (byDate[toISODate(d)] || []).forEach(function (x) {
+        var a = sessionAffiliation(x);
+        if (a) seenAff[a.label + "|" + a.color] = a;
+      });
+    });
+    var affList = Object.keys(seenAff).map(function (k) { return seenAff[k]; });
+    $("#calAffLegend").innerHTML = affList.length
+      ? '<span class="legend-label">' + esc(t("legendGroup")) + "</span>" + affList.map(function (a) { return affChipHtml(a, "group-chip-sm"); }).join("")
+      : "";
 
     var hint = $("#calEmptyHint");
     hint.hidden = weekCount > 0;
@@ -1671,6 +1711,9 @@
     var pct = s.capacity ? Math.min(100, Math.round(count / s.capacity * 100)) : 0;
 
     $("#signupWhen").textContent = sessionWhenLabel(s);
+    var aff = sessionAffiliation(s);
+    $("#signupAff").hidden = !aff;
+    if (aff) $("#signupAff").innerHTML = affChipHtml(aff) + (aff.name !== aff.label ? '<span class="signup-aff-name">' + esc(aff.name) + "</span>" : "");
     var room = (s.room || "").trim();
     $("#signupRoom").hidden = !room;
     $("#signupRoomName").textContent = room;
@@ -1904,6 +1947,38 @@
   }
 
   /* ---------- Koordinator: opprett / rediger økt ---------- */
+  /* ---------- Koordinator: tilknytning (gruppe) ---------- */
+  function setSessionAff(aff) {
+    state.sessionAff = aff;
+    var summary = $("#sessionAffSummary");
+    if (aff) {
+      summary.innerHTML = affChipHtml(aff) + "<span>" + esc(aff.name) + "</span>";
+    } else {
+      summary.innerHTML = '<span class="group-picker-placeholder">' + esc(t("affNone")) + "</span>";
+    }
+  }
+  function renderSessionAffPicker() {
+    var menu = $("#sessionAffMenu");
+    if (!menu) return;
+    menu.innerHTML = "";
+    function addItem(html, aff) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "group-picker-item";
+      btn.innerHTML = html;
+      btn.addEventListener("click", function () {
+        setSessionAff(aff);
+        $("#sessionAffPicker").removeAttribute("open");
+      });
+      menu.appendChild(btn);
+    }
+    addItem('<span class="group-picker-placeholder">' + esc(t("affNone")) + "</span>", null);
+    state.groups.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); }).forEach(function (g) {
+      var aff = { id: g.id, label: groupShortLabel(g), name: g.name, color: groupColor(g) };
+      addItem(affChipHtml(aff, "group-chip-lg") + "<span>" + esc(g.name) + "</span>", aff);
+    });
+  }
+
   /* ---------- Koordinator: lagrede rom ---------- */
   function roomIsSaved(name) {
     var key = name.trim().toLowerCase();
@@ -2001,6 +2076,8 @@
     populateLengthOptions(s ? s.halfHours : 2);
     $("#sessionCapacityInput").value = s ? s.capacity : 10;
     $("#sessionRoomInput").value = s ? s.room || "" : "";
+    setSessionAff(s ? sessionAffiliation(s) : null);
+    $("#sessionAffPicker").removeAttribute("open");
     updateRememberRoomBtn();
     $("#sessionParticipantNoteInput").value = s ? s.participantNote || "" : "";
     showSessionError("");
@@ -2054,6 +2131,10 @@
       halfHours: Number($("#sessionLengthInput").value),
       capacity: capacity,
       room: $("#sessionRoomInput").value.trim(),
+      affiliationId: state.sessionAff ? state.sessionAff.id : "",
+      affiliation: state.sessionAff ? state.sessionAff.label : "",
+      affiliationName: state.sessionAff ? state.sessionAff.name : "",
+      affiliationColor: state.sessionAff ? state.sessionAff.color : "",
       participantNote: $("#sessionParticipantNoteInput").value.trim(),
     };
     var organizerNote = $("#sessionOrganizerNoteInput").value.trim();

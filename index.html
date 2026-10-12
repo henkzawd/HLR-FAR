@@ -161,10 +161,12 @@
         <button class="cal-next-available" id="calNextAvailable" type="button" hidden></button>
 
         <div class="cal-legend" id="calLegend" aria-hidden="true">
+          <span class="legend-label" data-i18n="legendSpots">Plasser:</span>
           <span class="legend-item is-open" data-i18n="legendOpen">Ledig</span>
           <span class="legend-item is-filling" data-i18n="legendFilling">Nesten fullt</span>
           <span class="legend-item is-full" data-i18n="legendFull">Fullt</span>
           <span class="legend-item is-past" data-i18n="legendPast">Passert</span>
+          <span class="cal-aff-legend" id="calAffLegend"></span>
         </div>
 
         <div class="cal" id="cal"></div>
@@ -395,6 +397,16 @@
         <span data-i18n="fieldCapacity">Maks antall påmeldte</span>
         <input type="number" id="sessionCapacityInput" min="1" max="200" step="1" required />
       </label>
+      <div class="field">
+        <span data-i18n="fieldAffiliation">Tilknytning (gruppe)</span>
+        <details class="group-picker" id="sessionAffPicker">
+          <summary class="group-picker-summary" id="sessionAffSummary">
+            <span class="group-picker-placeholder" data-i18n="affNone">Ingen tilknytning</span>
+          </summary>
+          <div class="group-picker-menu" id="sessionAffMenu"></div>
+        </details>
+        <p class="field-hint" data-i18n="affHint" style="margin:2px 0 0"></p>
+      </div>
       <div class="room-box">
         <label class="field">
           <span data-i18n="fieldRoom">Rom</span>
@@ -446,6 +458,7 @@
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="signupTitle">
     <h2 id="signupTitle" data-i18n="signupTitle">Meld deg på</h2>
     <p class="signup-when" id="signupWhen"></p>
+    <p class="signup-aff" id="signupAff" hidden></p>
     <p class="signup-room" id="signupRoom" hidden>📍 <span data-i18n="signupRoomLabel">Rom</span>: <strong id="signupRoomName"></strong></p>
 
     <div class="signup-capacity">
