@@ -923,6 +923,23 @@ body[data-role="participant"] .nav { display: none; }
 .reg-request-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .reg-request-actions .btn { padding: 6px 12px; }
 
+/* Påmeldingsvindu: «ingen bekreftelse»-advarsel og kalenderknapper */
+.signup-warning {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 4px 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+}
+.signup-warning::before { content: "⚠ "; }
+.signup-done .signup-warning { color: var(--warn); font-size: 13.5px; }
+.signup-cal { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.signup-cal .btn { text-decoration: none; }
+.signup-cal-hint { margin: 10px 0 0; text-align: left; }
+
 /* Påmeldte (koordinator) */
 .reg-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
 .reg-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }

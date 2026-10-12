@@ -117,8 +117,17 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
   passert. Fulle og passerte økter kan ikke meldes på.
 - Boksen **«Neste ledige økt»** øverst tar deg rett til første økt med
   ledige plasser.
-- Det sendes **ikke** e-postbekreftelse. Deltakeren får en bekreftelse på
-  skjermen, og koordinatorene kan se e-postadressen i påmeldingslisten.
+- Det sendes **ikke** e-postbekreftelse. Både før og etter påmeldingen står
+  det en gul tekst om at man selv må huske dato og tidspunkt. Koordinatorene
+  kan se e-postadressen i påmeldingslisten.
+- Etter påmeldingen kan deltakeren legge økten i kalenderen sin, på to måter:
+  - **«Last ned kalenderfil (.ics)»** — en liten tekstfil (ikke et program,
+    og ikke en .exe-fil). Dobbeltklikk den, så legges økten inn i Outlook med
+    en påminnelse dagen før.
+  - **«Åpne i Outlook på nett»** — åpner et ferdig utfylt kalenderutkast i
+    nettleseren, helt uten nedlasting. Denne er laget for jobb-/Microsoft
+    365-kontoer. Hvis det ikke virker på sykehus-PC-ene, bruk
+    kalenderfilen eller noter tidspunktet selv.
 - Samme e-postadresse kan bare melde seg på én gang per økt.
 - **Må du melde deg av?** Åpne økten og trykk **«Må du melde deg av?»**.
   Skriv inn e-posten du meldte deg på med, og en kort begrunnelse, og trykk

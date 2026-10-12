@@ -162,7 +162,14 @@
       fieldEmail: "E-post",
       signupSubmit: "Meld meg på",
       signupDoneTitle: "Du er påmeldt!",
-      signupDoneText: "Du er registrert på økten {when}. Du får ikke bekreftelse på e-post, så noter deg tidspunktet.",
+      signupDoneText: "Du er registrert på økten {when}.",
+      signupNoReceipt: "Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.",
+      icsDownload: "Last ned kalenderfil (.ics)",
+      outlookWeb: "Åpne i Outlook på nett",
+      icsHint: "Kalenderfilen er en vanlig tekstfil, ikke et program: dobbeltklikk den, så legges økten i Outlook. Hvis nedlasting er blokkert på PC-en din, bruk «Outlook på nett»-knappen eller noter tidspunktet selv.",
+      icsSummary: "HLR-opplæring (FAR)",
+      icsReminder: "Påminnelse: HLR-opplæring i morgen",
+      icsSignedUpAs: "Påmeldt som: {name}",
       signupErrName: "Skriv fullt navn (fornavn og etternavn).",
       signupErrEmail: "Skriv en gyldig e-postadresse.",
       signupErrFull: "Beklager, økten ble full før du rakk å melde deg på.",
@@ -379,7 +386,14 @@
       fieldEmail: "Email",
       signupSubmit: "Sign me up",
       signupDoneTitle: "You're signed up!",
-      signupDoneText: "You're registered for the session {when}. You won't receive an email confirmation, so please make a note of the time.",
+      signupDoneText: "You're registered for the session {when}.",
+      signupNoReceipt: "Note: No confirmation of your sign-up is sent. Please make a note of the date and time yourself.",
+      icsDownload: "Download calendar file (.ics)",
+      outlookWeb: "Open in Outlook on the web",
+      icsHint: "The calendar file is a plain text file, not a program: double-click it to add the session to Outlook. If downloads are blocked on your PC, use the “Outlook on the web” button or make a note of the time yourself.",
+      icsSummary: "CPR training (FAR)",
+      icsReminder: "Reminder: CPR training tomorrow",
+      icsSignedUpAs: "Signed up as: {name}",
       signupErrName: "Enter your full name (first and last name).",
       signupErrEmail: "Enter a valid email address.",
       signupErrFull: "Sorry, the session filled up before you could sign up.",
@@ -533,6 +547,7 @@
     openSessionId: null, // null = ny økt, ellers id for redigering
     openSessionDraft: null, // {date, start} når en ny økt opprettes ved å trykke i kalenderen
     openSignupId: null,
+    signupDoneSession: null, // økten og navnet fra siste vellykkede påmelding (til kalenderfilen)
     registrationsUnsub: null,
     requestsUnsub: null,
     modalRegs: [],
@@ -1344,11 +1359,17 @@
 
   function sessionStartMin(s) { return timeToMin(s.start); }
   function sessionEndMin(s) { return sessionStartMin(s) + (s.halfHours || 1) * CAL_STEP; }
-  function sessionIsPast(s) {
-    var end = parseISODate(s.date);
-    end.setMinutes(sessionEndMin(s));
-    return end.getTime() <= Date.now();
+  function sessionStartDate(s) {
+    var d = parseISODate(s.date);
+    d.setMinutes(sessionStartMin(s));
+    return d;
   }
+  function sessionEndDate(s) {
+    var d = parseISODate(s.date);
+    d.setMinutes(sessionEndMin(s));
+    return d;
+  }
+  function sessionIsPast(s) { return sessionEndDate(s).getTime() <= Date.now(); }
   function sessionCount(s) { return s.registeredCount || 0; }
   function sessionSpotsLeft(s) { return Math.max(0, (s.capacity || 0) - sessionCount(s)); }
   function sessionStatus(s) {
@@ -1606,6 +1627,7 @@
     $("#signupDone").hidden = true;
     $("#signupError").hidden = true;
     $("#signupSubmitBtn").disabled = false;
+    state.signupDoneSession = null;
     $("#cancelForm").reset();
     $("#cancelForm").hidden = true;
     $("#cancelError").hidden = true;
@@ -1696,6 +1718,8 @@
         $("#signupForm").hidden = true;
         $("#signupDone").hidden = false;
         $("#signupDoneText").textContent = t("signupDoneText", { when: sessionWhenLabel(s) });
+        state.signupDoneSession = { session: s, name: name };
+        $("#outlookWebLink").href = outlookWebUrl(s, name);
         updateSignupModal();
       })
       .catch(function (err) {
@@ -1710,6 +1734,83 @@
         showSignupError(t(key || "toastError"));
       })
       .then(function () { $("#signupSubmitBtn").disabled = false; });
+  }
+
+  /* ---------- Kalenderfil (.ics) og Outlook på nett ---------- */
+  // .ics er en ren tekstfil (ikke et program). Tidene skrives i UTC, som Outlook alltid forstår riktig.
+  function icsUtc(d) {
+    return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) + "T" + pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) + "00Z";
+  }
+  function icsEscape(str) {
+    return String(str).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  }
+  // Linjer i .ics skal være maks 75 byte; lengre linjer brytes med et mellomrom først på neste linje.
+  function icsFold(line) {
+    var enc = new TextEncoder();
+    var out = [];
+    var cur = "";
+    var bytes = 0;
+    Array.from(line).forEach(function (ch) {
+      var b = enc.encode(ch).length;
+      if (bytes + b > 75) { out.push(cur); cur = " "; bytes = 1; }
+      cur += ch;
+      bytes += b;
+    });
+    out.push(cur);
+    return out.join("\r\n");
+  }
+  function sessionDescription(s, name) {
+    var parts = [];
+    if ((s.participantNote || "").trim()) parts.push(s.participantNote.trim());
+    if (name) parts.push(t("icsSignedUpAs", { name: name }));
+    return parts.join("\n\n");
+  }
+  function buildIcs(s, name) {
+    var lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//HLR i FAR//NO",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      "UID:" + s.id + "-" + Date.now() + "@hlr-far",
+      "DTSTAMP:" + icsUtc(new Date()),
+      "DTSTART:" + icsUtc(sessionStartDate(s)),
+      "DTEND:" + icsUtc(sessionEndDate(s)),
+      "SUMMARY:" + icsEscape(t("icsSummary")),
+      "DESCRIPTION:" + icsEscape(sessionDescription(s, name)),
+      "BEGIN:VALARM",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:" + icsEscape(t("icsReminder")),
+      "TRIGGER:-P1D",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ];
+    return lines.map(icsFold).join("\r\n") + "\r\n";
+  }
+  function downloadIcs() {
+    var done = state.signupDoneSession;
+    if (!done) return;
+    var blob = new Blob([buildIcs(done.session, done.name)], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "HLR-opplaering-" + done.session.date + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  // Lenke som åpner et ferdig utfylt kalenderutkast i Outlook på nett – ingen nedlasting.
+  function outlookWebUrl(s, name) {
+    function iso(d) { return d.toISOString().replace(/\.\d{3}Z$/, "Z"); }
+    return "https://outlook.office.com/calendar/0/deeplink/compose?path=" + encodeURIComponent("/calendar/action/compose") +
+      "&rru=addevent" +
+      "&subject=" + encodeURIComponent(t("icsSummary")) +
+      "&body=" + encodeURIComponent(sessionDescription(s, name)) +
+      "&startdt=" + encodeURIComponent(iso(sessionStartDate(s))) +
+      "&enddt=" + encodeURIComponent(iso(sessionEndDate(s)));
   }
 
   // Deltakere kan ikke melde noen av direkte. De sender en forespørsel med begrunnelse,
@@ -2302,6 +2403,7 @@
     $("#deleteSessionBtn").addEventListener("click", deleteSession);
     $("#sessionModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeSessionModal(); });
 
+    $("#icsBtn").addEventListener("click", downloadIcs);
     $("#cancelToggleBtn").addEventListener("click", function () {
       $("#cancelToggleBtn").hidden = true;
       $("#cancelForm").hidden = false;

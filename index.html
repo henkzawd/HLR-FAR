@@ -449,6 +449,7 @@
         <span data-i18n="fieldEmail">E-post</span>
         <input type="email" id="signupEmailInput" autocomplete="email" required />
       </label>
+      <p class="signup-warning" data-i18n="signupNoReceipt">Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.</p>
       <p class="form-error" id="signupError" role="alert" hidden></p>
       <p class="signup-closed" id="signupClosed" hidden></p>
       <div class="modal-actions">
@@ -488,6 +489,15 @@
       <div class="signup-done-check" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" /></svg></div>
       <h3 data-i18n="signupDoneTitle">Du er påmeldt!</h3>
       <p id="signupDoneText"></p>
+      <p class="signup-warning" data-i18n="signupNoReceipt">Obs: Det sendes ingen bekreftelse på påmelding. Husk selv å notere deg dato og tidspunkt.</p>
+      <div class="signup-cal">
+        <button type="button" class="btn btn-outline" id="icsBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="7"/><line x1="16" y1="3" x2="16" y2="7"/></svg>
+          <span data-i18n="icsDownload">Last ned kalenderfil (.ics)</span>
+        </button>
+        <a class="btn btn-outline" id="outlookWebLink" href="#" target="_blank" rel="noopener noreferrer" data-i18n="outlookWeb">Åpne i Outlook på nett</a>
+      </div>
+      <p class="field-hint signup-cal-hint" data-i18n="icsHint"></p>
       <div class="modal-actions">
         <div></div>
         <button type="button" class="btn btn-primary" id="signupDoneCloseBtn" data-i18n="close">Lukk</button>
