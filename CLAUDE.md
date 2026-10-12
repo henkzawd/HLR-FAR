@@ -7,7 +7,12 @@ realtime-editable data. Served via Vercel, which is already connected
 to this GitHub repo (auto-deploys previews on PRs and a fixed URL on
 `main`) — see `OPPSETT.md` step 7.
 
-- `index.html` / `styles.css` / `app.js` — the whole app. `app.js` holds
+- `index.html` / `styles.css` / `app.js` — the whole app. A role popup
+  (Deltaker / Koordinator, coordinator password in `COORDINATOR_PASSWORD`)
+  gates the UI: participants only get the week-calendar sign-up view
+  (`sessions` / `sessionPrivate` / `sessions/{id}/registrations` in
+  Firestore); coordinators get everything. The password is client-side
+  only — it is a door-keeper, not real security. `app.js` holds
   the Norwegian/English translation dictionaries and all Firestore
   logic (see the numbered section comments inside it).
 - `firebase-config.js` — placeholder Firebase web config; the user fills
