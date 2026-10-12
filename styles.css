@@ -956,6 +956,7 @@ body[data-role="participant"] .nav { display: none; }
 .cal-aff-legend:empty { display: none; }
 .signup-aff { display: flex; align-items: center; gap: 10px; margin: -6px 0 10px; font-weight: 600; font-size: 15px; }
 .signup-aff .group-chip { font-size: 12px; padding: 4px 10px; }
+.signup-aff-name { font-weight: 500; font-size: 13.5px; color: var(--text-muted); }
 
 /* Rom */
 .signup-room {

@@ -99,9 +99,18 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
     koordinatorer og deltakere, og under kalenderen vises en forklaring
     på fargene. Stolpen i blokken viser fortsatt hvor mange plasser som er
     ledige (grønn/gul/rød). Velger du «Ingen tilknytning», beholder økten
-    vanlig farge. Merk: fargen og navnet lagres på økten når du trykker
-    «Lagre». Endrer du en gruppes navn senere, må du åpne og lagre
-    øktene på nytt for at de skal få det nye navnet.
+    vanlig farge.
+    **Forklaring på kortnavnet:** når en deltaker trykker på økten, står
+    kortnavnet med en diskret forklaring ved siden av (f.eks. «UL» med
+    «Ullevål»). Forklaringen skriver du i feltet **«Forklaring på
+    kortnavnet»** når du oppretter eller redigerer en gruppe under
+    **«Grupper»**. Gruppene som fantes fra før (RELIS, UL, F.Inst, SSE, RH)
+    får en forklaring automatisk første gang en koordinator åpner appen
+    (RELIS er foreløpig satt til «Regionalt legemiddelinformasjonssenter» –
+    rett det under «Grupper» hvis det er feil). Hvis du ikke fyller ut en
+    forklaring, brukes gruppenavnet hvis det er lengre enn kortnavnet.
+    Endrer du en gruppe senere (navn, forklaring), oppdateres øktene
+    automatisk neste gang en koordinator har appen åpen.
   - **Rom** — hvor opplæringen holdes (f.eks. «Rom 3.201, Ullevål bygg 6»).
     Rommet vises for deltakerne i selve kalenderblokken, i påmeldingsvinduet,
     i bekreftelsen etter påmelding og i kalenderfilen/Outlook-utkastet.
