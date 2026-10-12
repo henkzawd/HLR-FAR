@@ -10,7 +10,7 @@ to this GitHub repo (auto-deploys previews on PRs and a fixed URL on
 - `index.html` / `styles.css` / `app.js` — the whole app. A role popup
   (Deltaker / Koordinator, coordinator password in `COORDINATOR_PASSWORD`)
   gates the UI: participants only get the week-calendar sign-up view
-  (`sessions` / `sessionPrivate` / `sessions/{id}/registrations` in
+  (`sessions` (incl. `room`) / `sessionPrivate` / `sessions/{id}/registrations` / `sessions/{id}/cancelRequests`; coordinator-only `rooms` holds saved room names in
   Firestore); coordinators get everything. The password is client-side
   only — it is a door-keeper, not real security. `app.js` holds
   the Norwegian/English translation dictionaries and all Firestore

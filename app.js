@@ -170,6 +170,15 @@
       icsSummary: "HLR-opplæring (FAR)",
       icsReminder: "Påminnelse: HLR-opplæring i morgen",
       icsSignedUpAs: "Påmeldt som: {name}",
+      fieldRoom: "Rom",
+      roomPlaceholder: "F.eks. Rom 3.201, Ullevål bygg 6",
+      rememberRoom: "Husk dette rommet",
+      roomRemembered: "Rommet er husket",
+      savedRooms: "Lagrede rom (trykk for å bruke)",
+      noSavedRooms: "Ingen lagrede rom ennå. Skriv inn et rom og trykk «Husk dette rommet».",
+      removeSavedRoom: "Fjern {room} fra lagrede rom",
+      toastRoomSaved: "Rommet er lagret",
+      signupRoomLabel: "Rom",
       signupErrName: "Skriv fullt navn (fornavn og etternavn).",
       signupErrEmail: "Skriv en gyldig e-postadresse.",
       signupErrFull: "Beklager, økten ble full før du rakk å melde deg på.",
@@ -394,6 +403,15 @@
       icsSummary: "CPR training (FAR)",
       icsReminder: "Reminder: CPR training tomorrow",
       icsSignedUpAs: "Signed up as: {name}",
+      fieldRoom: "Room",
+      roomPlaceholder: "E.g. Room 3.201, Ullevål building 6",
+      rememberRoom: "Remember this room",
+      roomRemembered: "Room remembered",
+      savedRooms: "Saved rooms (tap to use)",
+      noSavedRooms: "No saved rooms yet. Type a room and press “Remember this room”.",
+      removeSavedRoom: "Remove {room} from saved rooms",
+      toastRoomSaved: "Room saved",
+      signupRoomLabel: "Room",
       signupErrName: "Enter your full name (first and last name).",
       signupErrEmail: "Enter a valid email address.",
       signupErrFull: "Sorry, the session filled up before you could sign up.",
@@ -541,6 +559,7 @@
     bannerKey: null,
     role: null, // "participant" | "coordinator" – satt når man har valgt i popupen
     sessions: [],
+    rooms: [], // lagrede rom (kun koordinatorer)
     calWeekStart: null, // ISO-dato for mandagen i uken som vises
     calDayIdx: 0, // valgt ukedag (0 = mandag) – brukes i mobilvisning
     calAnimate: false,
@@ -1518,13 +1537,15 @@
         var short = (s.halfHours || 1) === 1;
         var narrow = p.lanes > 1; // overlappende økter deler plassen – da vises kun det viktigste
         var requests = coordinator ? (s.cancelRequestCount || 0) : 0;
-        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + ", " + t("calRegisteredOf", { n: count, max: s.capacity }) +
+        var room = (s.room || "").trim();
+        var aria = longDateLabel(s.date) + ", " + sessionTimeRange(s) + (room ? ", " + t("signupRoomLabel") + " " + room : "") + ", " + t("calRegisteredOf", { n: count, max: s.capacity }) +
           (requests ? ", " + t("calCancelRequests", { n: requests }) : "");
         if (narrow) label = status === "full" ? t("calFull") : countText;
         html +=
-          '<button type="button" class="cal-block is-' + status + (short ? " is-short" : "") + (narrow ? " is-narrow" : "") + '" data-id="' + esc(s.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" ' +
+          '<button type="button" class="cal-block is-' + status + (short ? " is-short" : "") + (narrow ? " is-narrow" : "") + (room ? " has-room" : "") + '" data-id="' + esc(s.id) + '" aria-label="' + esc(aria) + '" title="' + esc(aria) + '" ' +
           'style="top:' + top + "%;height:" + height + "%;left:calc(" + (p.lane * laneW) + "% + 2px);width:calc(" + laneW + "% - 4px);--i:" + n + '">' +
           '<span class="cal-block-time">' + esc(short ? s.start + " · " + countText : narrow ? s.start : sessionTimeRange(s)) + "</span>" +
+          (room ? '<span class="cal-block-room">📍 ' + esc(room) + "</span>" : "") +
           (short ? "" : '<span class="cal-block-count">' + esc(label) + "</span>" + '<span class="cal-bar"><i style="width:' + pct + '%"></i></span>') +
           (requests ? '<span class="cal-badge" aria-hidden="true">' + requests + "</span>" : "") +
           "</button>";
@@ -1650,6 +1671,9 @@
     var pct = s.capacity ? Math.min(100, Math.round(count / s.capacity * 100)) : 0;
 
     $("#signupWhen").textContent = sessionWhenLabel(s);
+    var room = (s.room || "").trim();
+    $("#signupRoom").hidden = !room;
+    $("#signupRoomName").textContent = room;
     $("#signupCapacityText").textContent =
       t("calRegisteredOf", { n: count, max: s.capacity }) + (status === "full" ? " · " + t("calFull") : status === "past" ? "" : " · " + spotsLeftLabel(s));
     var cap = $(".signup-capacity");
@@ -1719,6 +1743,9 @@
         $("#signupDone").hidden = false;
         $("#signupDoneText").textContent = t("signupDoneText", { when: sessionWhenLabel(s) });
         state.signupDoneSession = { session: s, name: name };
+        var doneRoom = (s.room || "").trim();
+        $("#signupDoneRoom").hidden = !doneRoom;
+        $("#signupDoneRoomName").textContent = doneRoom;
         $("#outlookWebLink").href = outlookWebUrl(s, name);
         updateSignupModal();
       })
@@ -1779,6 +1806,7 @@
       "DTEND:" + icsUtc(sessionEndDate(s)),
       "SUMMARY:" + icsEscape(t("icsSummary")),
       "DESCRIPTION:" + icsEscape(sessionDescription(s, name)),
+    ].concat((s.room || "").trim() ? ["LOCATION:" + icsEscape(s.room.trim())] : [], [
       "BEGIN:VALARM",
       "ACTION:DISPLAY",
       "DESCRIPTION:" + icsEscape(t("icsReminder")),
@@ -1786,7 +1814,7 @@
       "END:VALARM",
       "END:VEVENT",
       "END:VCALENDAR",
-    ];
+    ]);
     return lines.map(icsFold).join("\r\n") + "\r\n";
   }
   function downloadIcs() {
@@ -1809,6 +1837,7 @@
       "&rru=addevent" +
       "&subject=" + encodeURIComponent(t("icsSummary")) +
       "&body=" + encodeURIComponent(sessionDescription(s, name)) +
+      ((s.room || "").trim() ? "&location=" + encodeURIComponent(s.room.trim()) : "") +
       "&startdt=" + encodeURIComponent(iso(sessionStartDate(s))) +
       "&enddt=" + encodeURIComponent(iso(sessionEndDate(s)));
   }
@@ -1875,6 +1904,56 @@
   }
 
   /* ---------- Koordinator: opprett / rediger økt ---------- */
+  /* ---------- Koordinator: lagrede rom ---------- */
+  function roomIsSaved(name) {
+    var key = name.trim().toLowerCase();
+    return !!key && state.rooms.some(function (r) { return r.name.toLowerCase() === key; });
+  }
+  function updateRememberRoomBtn() {
+    var value = $("#sessionRoomInput").value.trim();
+    var saved = roomIsSaved(value);
+    $("#rememberRoomBtn").disabled = !value || saved;
+    $("#rememberRoomLabel").textContent = t(saved ? "roomRemembered" : "rememberRoom");
+  }
+  function renderSavedRooms() {
+    var box = $("#savedRooms");
+    box.innerHTML = "";
+    $("#savedRoomsEmpty").hidden = state.rooms.length > 0;
+    state.rooms.forEach(function (r) {
+      var chip = document.createElement("span");
+      chip.className = "room-chip";
+      var use = document.createElement("button");
+      use.type = "button";
+      use.className = "room-chip-use";
+      use.textContent = "📍 " + r.name;
+      use.addEventListener("click", function () {
+        $("#sessionRoomInput").value = r.name;
+        updateRememberRoomBtn();
+      });
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "room-chip-del";
+      del.textContent = "×";
+      del.setAttribute("aria-label", t("removeSavedRoom", { room: r.name }));
+      del.title = t("removeSavedRoom", { room: r.name });
+      del.addEventListener("click", function () {
+        if (!requireDb()) return;
+        roomsCol().doc(r.id).delete().catch(onDbError);
+      });
+      chip.appendChild(use);
+      chip.appendChild(del);
+      box.appendChild(chip);
+    });
+    updateRememberRoomBtn();
+  }
+  function rememberRoom() {
+    var name = $("#sessionRoomInput").value.trim();
+    if (!name || roomIsSaved(name) || !requireDb()) return;
+    roomsCol().add({ name: name, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+      .then(function () { toast(t("toastRoomSaved")); })
+      .catch(onDbError);
+  }
+
   function populateStartOptions() {
     var sel = $("#sessionStartInput");
     sel.innerHTML = "";
@@ -1921,6 +2000,8 @@
     $("#sessionStartInput").value = s ? s.start : draft ? draft.start : "09:00";
     populateLengthOptions(s ? s.halfHours : 2);
     $("#sessionCapacityInput").value = s ? s.capacity : 10;
+    $("#sessionRoomInput").value = s ? s.room || "" : "";
+    updateRememberRoomBtn();
     $("#sessionParticipantNoteInput").value = s ? s.participantNote || "" : "";
     showSessionError("");
 
@@ -1972,6 +2053,7 @@
       start: $("#sessionStartInput").value,
       halfHours: Number($("#sessionLengthInput").value),
       capacity: capacity,
+      room: $("#sessionRoomInput").value.trim(),
       participantNote: $("#sessionParticipantNoteInput").value.trim(),
     };
     var organizerNote = $("#sessionOrganizerNoteInput").value.trim();
@@ -2150,6 +2232,7 @@
   function deficienciesCol() { return state.db.collection("deficiencies"); }
   function guideCol() { return state.db.collection("guide"); }
   function guideChangelogCol() { return state.db.collection("guideChangelog"); }
+  function roomsCol() { return state.db.collection("rooms"); }
   function sessionsCol() { return state.db.collection("sessions"); }
   function sessionPrivateCol() { return state.db.collection("sessionPrivate"); }
   function registrationsCol(sessionId) { return sessionsCol().doc(sessionId).collection("registrations"); }
@@ -2212,6 +2295,20 @@
     subscribeDeficiencies();
     subscribeGuide();
     subscribeGuideChangelog();
+    subscribeRooms();
+  }
+
+  function subscribeRooms() {
+    roomsCol().onSnapshot(function (snap) {
+      state.rooms = snap.docs
+        .map(function (d) { return { id: d.id, name: d.data().name || "" }; })
+        .filter(function (r) { return r.name; })
+        .sort(function (a, b) { return a.name.localeCompare(b.name, locale(), { numeric: true }); });
+      renderSavedRooms();
+    }, function (err) {
+      console.error(err);
+      showBanner("bannerPermission");
+    });
   }
 
   function seedIfEmpty() {
@@ -2399,6 +2496,8 @@
     $("#sessionForm").addEventListener("submit", submitSessionForm);
     $("#sessionStartInput").addEventListener("change", function () { populateLengthOptions(Number($("#sessionLengthInput").value)); });
     $("#sessionLengthInput").addEventListener("change", updateSessionEndHint);
+    $("#rememberRoomBtn").addEventListener("click", rememberRoom);
+    $("#sessionRoomInput").addEventListener("input", updateRememberRoomBtn);
     $("#cancelSessionBtn").addEventListener("click", closeSessionModal);
     $("#deleteSessionBtn").addEventListener("click", deleteSession);
     $("#sessionModalOverlay").addEventListener("click", function (ev) { if (ev.target === ev.currentTarget) closeSessionModal(); });

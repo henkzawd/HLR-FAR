@@ -751,7 +751,7 @@ body[data-role="participant"] .nav { display: none; }
 .is-past { --cal-c: var(--text-muted); }
 
 .cal {
-  --cal-row: 30px;
+  --cal-row: 36px;
   --cal-gutter: 56px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -850,6 +850,7 @@ body[data-role="participant"] .nav { display: none; }
 .cal-block:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; z-index: 4; }
 .cal-block.is-past { opacity: 0.55; }
 .cal-block-time { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-block-room { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-block-count { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-block.is-short { padding-top: 0; padding-bottom: 0; }
 .cal-block.is-narrow { padding-left: 8px; padding-right: 4px; font-size: 11.5px; }
@@ -939,6 +940,34 @@ body[data-role="participant"] .nav { display: none; }
 .signup-cal { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
 .signup-cal .btn { text-decoration: none; }
 .signup-cal-hint { margin: 10px 0 0; text-align: left; }
+
+/* Rom */
+.signup-room {
+  margin: -6px 0 14px;
+  font-size: 15px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: inline-block;
+}
+.signup-done .signup-room { display: inline-block; margin: 10px 0 0; color: var(--text); }
+.room-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px 4px; margin-bottom: 14px; }
+.room-box .field { margin-bottom: 10px; }
+.room-box .field input { background: var(--surface); }
+.room-input-row { display: flex; gap: 8px; }
+.room-input-row input { flex: 1; min-width: 0; }
+.room-input-row .btn { flex: none; white-space: nowrap; }
+.room-input-row .btn:disabled { opacity: 0.55; cursor: default; }
+.room-saved-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+.room-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.room-chip { display: inline-flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; }
+.room-chip:hover { border-color: var(--accent); }
+.room-chip button { border: none; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.room-chip-use { padding: 5px 4px 5px 12px; }
+.room-chip-del { padding: 5px 10px 5px 6px; color: var(--text-muted); font-size: 16px; line-height: 1; }
+.room-chip-del:hover { color: var(--alert, var(--accent-strong)); }
+.room-saved .field-hint { margin: 0 0 10px; }
+@media (max-width: 480px) { .room-input-row { flex-direction: column; } }
 
 /* Påmeldte (koordinator) */
 .reg-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
