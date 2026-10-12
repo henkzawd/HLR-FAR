@@ -90,6 +90,27 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
   Velg dato, starttidspunkt og **lengde** (i halve timer — fra 30 min og
   opp til kl. 16:00), og skriv inn **maks antall påmeldte**. Du kan legge
   inn et **rom** og to notater:
+  - **Tilknytning (gruppe)** — velg hvilken gruppe økten er for (f.eks. SSE,
+    RELIS eller RH) i nedtrekksmenyen. Menyen viser gruppene fra «Grupper»-
+    fanen, med samme farger. Skal du ha en gruppe som ikke finnes ennå
+    (f.eks. OUS eller LVB), legger du den først til under **«Grupper» →
+    «Legg til gruppe»**; den dukker da opp i menyen med en egen farge.
+    Økten får gruppens farge og et lite fargemerke i kalenderen, for både
+    koordinatorer og deltakere, og under kalenderen vises en forklaring
+    på fargene. Stolpen i blokken viser fortsatt hvor mange plasser som er
+    ledige (grønn/gul/rød). Velger du «Ingen tilknytning», beholder økten
+    vanlig farge.
+    **Forklaring på kortnavnet:** når en deltaker trykker på økten, står
+    kortnavnet med en diskret forklaring ved siden av (f.eks. «UL» med
+    «Ullevål»). Forklaringen skriver du i feltet **«Forklaring på
+    kortnavnet»** når du oppretter eller redigerer en gruppe under
+    **«Grupper»**. Gruppene som fantes fra før (RELIS, UL, F.Inst, SSE, RH)
+    får en forklaring automatisk første gang en koordinator åpner appen
+    (RELIS er foreløpig satt til «Regionalt legemiddelinformasjonssenter» –
+    rett det under «Grupper» hvis det er feil). Hvis du ikke fyller ut en
+    forklaring, brukes gruppenavnet hvis det er lengre enn kortnavnet.
+    Endrer du en gruppe senere (navn, forklaring), oppdateres øktene
+    automatisk neste gang en koordinator har appen åpen.
   - **Rom** — hvor opplæringen holdes (f.eks. «Rom 3.201, Ullevål bygg 6»).
     Rommet vises for deltakerne i selve kalenderblokken, i påmeldingsvinduet,
     i bekreftelsen etter påmelding og i kalenderfilen/Outlook-utkastet.
@@ -119,9 +140,9 @@ uken. På mobil velger du ukedag med fanene øverst i kalenderen.
 **Som deltaker:**
 - Trykk på en økt, les eventuelt notatet fra arrangør, fyll inn **fullt
   navn** og **e-post**, og trykk **«Meld meg på»**.
-- Du ser hvor mange som er påmeldt (f.eks. «7 av 10 påmeldt»). Fargene viser
-  om det er plass: grønn = ledig, gul = nesten fullt, rød = fullt, grå =
-  passert. Fulle og passerte økter kan ikke meldes på.
+- Du ser hvor mange som er påmeldt (f.eks. «7 av 10 påmeldt»). Fargen på økten
+  viser hvilken gruppe den er for; stolpen i blokken viser om det er plass:
+  grønn = ledig, gul = nesten fullt, rød = fullt, grå = passert. Fulle og passerte økter kan ikke meldes på.
 - Boksen **«Neste ledige økt»** øverst tar deg rett til første økt med
   ledige plasser.
 - Det sendes **ikke** e-postbekreftelse. Både før og etter påmeldingen står
