@@ -11,8 +11,26 @@
       navOverview: "Oversikt",
       navGroups: "Grupper",
       navLog: "Opplæringslogg",
+      navLogShort: "Logg",
       navDeficiencies: "Mangler",
       navGuide: "Hurtigstart",
+      navMetronome: "Metronom",
+      metroTitle: "Metronom for kompresjoner",
+      metroDesc: "Hjelper deltakerne å holde riktig takt på brystkompresjonene. Lyden fortsetter selv om skjermen låses.",
+      metroTempoLabel: "Takt",
+      metroBpm: "slag/min",
+      metroGold: "Gullstandard",
+      metroStart: "Start",
+      metroStop: "Stopp",
+      metroDuration: "Varighet",
+      metroEndless: "Uten stopp",
+      metroElapsed: "har gått",
+      metroRemaining: "igjen",
+      metroReady: "Trykk på Start",
+      metroReadyTimer: "Stopper automatisk etter {time}",
+      metroDone: "Ferdig! Tiden er ute.",
+      metroTip: "Tips: Skru opp volumet på telefonen. Du kan låse skjermen mens metronomen går, og stoppe den fra låseskjermen.",
+      metroPlayFailed: "Fikk ikke startet lyden. Prøv å trykke på Start igjen.",
       bannerNoDb: "Denne appen er ikke koblet til en database ennå. Se OPPSETT.md i prosjektet for å komme i gang (tar ca. 10 minutter).",
       bannerAuthFailed: "Fikk ikke logget inn mot databasen. Sjekk at «Anonym innlogging» er skrudd på under Authentication i Firebase-konsollen (se OPPSETT.md, steg 3).",
       bannerPermission: "Databasen avviste forespørselen. Sjekk sikkerhetsreglene i Firestore (se OPPSETT.md, steg 4).",
@@ -252,8 +270,26 @@
       navOverview: "Overview",
       navGroups: "Groups",
       navLog: "Training log",
+      navLogShort: "Log",
       navDeficiencies: "Issues",
       navGuide: "Quickstart",
+      navMetronome: "Metronome",
+      metroTitle: "Compression metronome",
+      metroDesc: "Helps participants keep the right pace for chest compressions. The sound keeps playing even when the screen is locked.",
+      metroTempoLabel: "Tempo",
+      metroBpm: "beats/min",
+      metroGold: "Gold standard",
+      metroStart: "Start",
+      metroStop: "Stop",
+      metroDuration: "Duration",
+      metroEndless: "No limit",
+      metroElapsed: "elapsed",
+      metroRemaining: "left",
+      metroReady: "Press Start",
+      metroReadyTimer: "Stops automatically after {time}",
+      metroDone: "Done! Time is up.",
+      metroTip: "Tip: Turn up the volume on your phone. You can lock the screen while the metronome is running, and stop it from the lock screen.",
+      metroPlayFailed: "Couldn’t start the sound. Try pressing Start again.",
       bannerNoDb: "This app isn't connected to a database yet. See OPPSETT.md in the project to get started (about 10 minutes).",
       bannerAuthFailed: "Could not sign in to the database. Check that \"Anonymous sign-in\" is enabled under Authentication in the Firebase console (see OPPSETT.md, step 3).",
       bannerPermission: "The database rejected the request. Check the Firestore security rules (see OPPSETT.md, step 4).",
@@ -718,6 +754,9 @@
     });
     $all("[data-i18n-placeholder]").forEach(function (el) {
       el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder")));
+    });
+    $all("[data-i18n-aria-label]").forEach(function (el) {
+      el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
     });
     $all("[data-i18n-lang-current]").forEach(function (el) { el.textContent = state.lang.toUpperCase(); });
     $("#calPrev").setAttribute("aria-label", t("calPrev"));
@@ -2332,6 +2371,257 @@
   }
 
   /* ============================================================
+     9d. METRONOM FOR KOMPRESJONER
+     ============================================================ */
+  // Lyden lages som en ferdig lydfil (WAV) her i nettleseren og spilles i et
+  // vanlig <audio>-element, slik som musikk. Det er det som gjør at lyden
+  // fortsetter når mobilskjermen låses (Web Audio og JavaScript-tidtakere settes
+  // på pause i bakgrunnen). Med tidtaker er lydfila nøyaktig så lang som valgt
+  // tid, så den stopper av seg selv også når telefonen er låst.
+  var METRO_DEFAULT_BPM = 110;
+  var METRO_DURATIONS = [0, 30, 60, 90, 120, 150, 180]; // sekunder, 0 = uten stopp
+  var METRO_RATE = 22050;
+  var METRO_LOOP_SECONDS = 60; // 60 s går opp i hele slag for alle tempoene, så løkka holder takten
+  var METRO_CHIME_SECONDS = 0.7;
+
+  var metro = {
+    bpm: METRO_DEFAULT_BPM,
+    duration: 0,
+    running: false,
+    finished: false,
+    audio: null,
+    url: null,
+    clip: null, // lydfila som spilles nå: {bpm, seconds, timed}
+    startedAt: 0, // Date.now() da metronomen startet (til «har gått»)
+    raf: null,
+  };
+
+  // Ett slag: en kort, myk «tre-kloss»-lyd (880 Hz + en kort, lys overtone).
+  // Den varer bare 45 ms og toner helt ut til stillhet, mens det er 500–600 ms
+  // mellom slagene – så slagene flyter aldri over i hverandre.
+  function metroTone(freq, seconds, decay, overtone) {
+    var n = Math.round(seconds * METRO_RATE);
+    var out = new Float32Array(n);
+    var fadeIn = 0.002 * METRO_RATE;
+    var fadeOut = 0.006 * METRO_RATE;
+    for (var i = 0; i < n; i++) {
+      var tt = i / METRO_RATE;
+      var env = Math.min(1, i / fadeIn) * Math.min(1, (n - 1 - i) / fadeOut) * Math.exp(-tt / decay);
+      var v = Math.sin(2 * Math.PI * freq * tt);
+      if (overtone) v += 0.35 * Math.sin(2 * Math.PI * freq * 2.76 * tt) * Math.exp(-tt / 0.006);
+      out[i] = v * env;
+    }
+    return out;
+  }
+  var metroSounds = null;
+  function metroGetSounds() {
+    if (!metroSounds) {
+      metroSounds = {
+        click: metroTone(880, 0.045, 0.012, true),
+        chimeLow: metroTone(1047, 0.25, 0.07, false),
+        chimeHigh: metroTone(1568, 0.4, 0.1, false),
+      };
+    }
+    return metroSounds;
+  }
+
+  function metroMix(samples, sound, atSeconds, gain) {
+    var start = Math.round(atSeconds * METRO_RATE);
+    for (var i = 0; i < sound.length && start + i < samples.length; i++) {
+      samples[start + i] = Math.round(Math.max(-1, Math.min(1, sound[i] * gain)) * 32767);
+    }
+  }
+
+  // Lager en mono 16-bit WAV-fil med slag i valgt tempo. Med tidtaker legges
+  // et lyst «ding-ding» til slutt, så man hører at tiden er ute.
+  function metroBuildWav(bpm, seconds, timed) {
+    var sounds = metroGetSounds();
+    var total = Math.ceil((seconds + (timed ? METRO_CHIME_SECONDS : 0)) * METRO_RATE);
+    var buf = new ArrayBuffer(44 + total * 2);
+    var view = new DataView(buf);
+    function str(off, text) { for (var i = 0; i < text.length; i++) view.setUint8(off + i, text.charCodeAt(i)); }
+    str(0, "RIFF"); view.setUint32(4, 36 + total * 2, true); str(8, "WAVE");
+    str(12, "fmt "); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, METRO_RATE, true); view.setUint32(28, METRO_RATE * 2, true);
+    view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    str(36, "data"); view.setUint32(40, total * 2, true);
+    var samples = new Int16Array(buf, 44, total); // nettlesere er «little-endian», som WAV krever
+    var period = 60 / bpm;
+    for (var b = 0; b * period < seconds - 1e-6; b++) metroMix(samples, sounds.click, b * period, 0.85);
+    if (timed) {
+      metroMix(samples, sounds.chimeLow, seconds, 0.6);
+      metroMix(samples, sounds.chimeHigh, seconds + 0.22, 0.6);
+    }
+    return new Blob([buf], { type: "audio/wav" });
+  }
+
+  function metroAudio() {
+    if (metro.audio) return metro.audio;
+    var audio = new Audio();
+    audio.preload = "auto";
+    // Systemet (låseskjerm, telefonsamtale o.l.) kan sette lyden på pause.
+    audio.addEventListener("pause", function () {
+      if (metro.running && audio.paused && !audio.ended) metroStop();
+    });
+    audio.addEventListener("ended", function () {
+      if (!metro.running) return;
+      metroStop();
+      metro.finished = true;
+      renderMetronome();
+    });
+    metro.audio = audio;
+    return audio;
+  }
+
+  function metroSetupMediaSession() {
+    // iPhone: spill som «medieavspilling», så lyden går selv om lydløs-bryteren er på.
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) { /* ikke støttet */ }
+    if (!("mediaSession" in navigator)) return;
+    try {
+      if (window.MediaMetadata) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: t("metroTitle"),
+          artist: metro.bpm + " " + t("metroBpm"),
+          album: t("appTitle"),
+        });
+      }
+      navigator.mediaSession.setActionHandler("play", function () { metroStart(); });
+      navigator.mediaSession.setActionHandler("pause", metroStop);
+      navigator.mediaSession.setActionHandler("stop", metroStop);
+    } catch (e) { /* eldre nettleser – låseskjermknappene mangler da bare */ }
+  }
+
+  // keepTime: bytt tempo midt i en økt uten å nullstille klokka.
+  function metroStart(keepTime) {
+    var audio = metroAudio();
+    var timed = metro.duration > 0;
+    var seconds = METRO_LOOP_SECONDS;
+    if (timed) {
+      seconds = metro.duration;
+      if (keepTime && metro.running && metro.clip && metro.clip.timed) {
+        seconds = Math.max(1, metro.clip.seconds - audio.currentTime);
+      }
+    }
+    if (!(keepTime && metro.running)) metro.startedAt = Date.now();
+
+    var oldUrl = metro.url;
+    metro.url = URL.createObjectURL(metroBuildWav(metro.bpm, seconds, timed));
+    metro.clip = { bpm: metro.bpm, seconds: seconds, timed: timed };
+    audio.loop = !timed;
+    audio.src = metro.url;
+    if (oldUrl) URL.revokeObjectURL(oldUrl);
+
+    metro.running = true;
+    metro.finished = false;
+    var url = metro.url;
+    var playing = audio.play();
+    if (playing && playing.catch) {
+      playing.catch(function () {
+        // Et tempobytte avbryter forrige avspilling – det er ikke en feil.
+        if (!metro.running || metro.url !== url) return;
+        metroStop();
+        toast(t("metroPlayFailed"));
+      });
+    }
+    metroSetupMediaSession();
+    try { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing"; } catch (e) { /* ikke støttet */ }
+    renderMetronome();
+    metroTick();
+  }
+
+  function metroStop() {
+    metro.running = false;
+    metro.finished = false;
+    if (metro.audio) metro.audio.pause();
+    if (metro.raf) { cancelAnimationFrame(metro.raf); metro.raf = null; }
+    try { if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused"; } catch (e) { /* ikke støttet */ }
+    renderMetronome();
+  }
+
+  function metroToggle() {
+    if (metro.running) metroStop();
+    else metroStart();
+  }
+
+  function metroFormat(totalSeconds) {
+    var sec = Math.max(0, Math.round(totalSeconds));
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  // Oppdaterer klokka og lar ringen rundt knappen «slå» i takt med lyden.
+  function metroTick() {
+    if (metro.raf) cancelAnimationFrame(metro.raf);
+    metro.raf = null;
+    if (!metro.running) return;
+    var audio = metro.audio;
+    var period = 60 / metro.clip.bpm;
+    var phase = (audio.currentTime % period) / period;
+    var beat = audio.paused ? 0 : Math.pow(1 - phase, 3);
+    $("#metroRing").style.setProperty("--beat", beat.toFixed(3));
+    if (metro.clip.timed) {
+      $("#metroTime").textContent = metroFormat(Math.ceil(metro.clip.seconds - audio.currentTime));
+    } else {
+      $("#metroTime").textContent = metroFormat(Math.floor((Date.now() - metro.startedAt) / 1000));
+    }
+    metro.raf = requestAnimationFrame(metroTick);
+  }
+
+  function renderMetronome() {
+    $all(".metro-tempo").forEach(function (btn) {
+      var on = Number(btn.getAttribute("data-bpm")) === metro.bpm;
+      btn.classList.toggle("is-active", on);
+      btn.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    $("#metroDurations").innerHTML = METRO_DURATIONS.map(function (d) {
+      var on = d === metro.duration;
+      return '<button class="metro-duration' + (on ? " is-active" : "") + '" type="button" role="radio" aria-checked="' + on + '" data-duration="' + d + '">' +
+        (d ? metroFormat(d) : "∞ " + esc(t("metroEndless"))) + "</button>";
+    }).join("");
+
+    $(".metro").classList.toggle("is-running", metro.running);
+    $("#metroNavDot").hidden = !metro.running;
+    var play = $("#metroPlayBtn");
+    play.setAttribute("aria-pressed", metro.running ? "true" : "false");
+    $("#metroPlayLabel").textContent = t(metro.running ? "metroStop" : "metroStart");
+
+    var sub;
+    if (metro.running) {
+      sub = t(metro.clip.timed ? "metroRemaining" : "metroElapsed");
+    } else {
+      $("#metroRing").style.setProperty("--beat", "0");
+      if (metro.finished) {
+        $("#metroTime").textContent = metroFormat(0);
+        sub = t("metroDone");
+      } else {
+        $("#metroTime").textContent = metroFormat(metro.duration);
+        sub = metro.duration ? t("metroReadyTimer", { time: metroFormat(metro.duration) }) : t("metroReady");
+      }
+    }
+    $("#metroTimeSub").textContent = sub;
+    $(".metro").classList.toggle("is-finished", !metro.running && metro.finished);
+  }
+
+  function bindMetronomeEvents() {
+    $("#metroPlayBtn").addEventListener("click", metroToggle);
+    $all(".metro-tempo").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        metro.bpm = Number(btn.getAttribute("data-bpm"));
+        if (metro.running) metroStart(true); // bytt tempo med én gang, så man kan sammenlikne
+        else renderMetronome();
+      });
+    });
+    $("#metroDurations").addEventListener("click", function (ev) {
+      var btn = ev.target.closest("[data-duration]");
+      if (!btn) return;
+      metro.duration = Number(btn.getAttribute("data-duration"));
+      if (metro.running) metroStart(); // ny varighet starter tidtakeren på nytt
+      else { metro.finished = false; renderMetronome(); }
+    });
+  }
+
+  /* ============================================================
      10. FIREBASE
      ============================================================ */
   function statusDocRef() { return state.db.collection("status").doc("current"); }
@@ -2588,6 +2878,7 @@
     renderDeficiencies();
     renderGuide();
     renderGuideChangelog();
+    renderMetronome();
   }
 
   function bindEvents() {
@@ -2614,6 +2905,7 @@
     $("#loginBackBtn").addEventListener("click", function () { showLoginStep("choose"); });
 
     bindCalendarEvents();
+    bindMetronomeEvents();
     $("#addSessionBtn").addEventListener("click", function () { openSessionModal(null, null); });
     $("#sessionForm").addEventListener("submit", submitSessionForm);
     $("#sessionStartInput").addEventListener("change", function () { populateLengthOptions(Number($("#sessionLengthInput").value)); });
