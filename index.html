@@ -62,12 +62,18 @@
       </button>
       <button class="nav-item" data-view="logg" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 3.5h14v17l-3-2-2 2-2-2-2 2-2-2-3 2z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        <span data-i18n="navLog">Opplæringslogg</span>
+        <span class="nav-label-long" data-i18n="navLog">Opplæringslogg</span>
+        <span class="nav-label-short" data-i18n="navLogShort">Logg</span>
       </button>
       <button class="nav-item" data-view="mangler" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7.5" x2="12" y2="13"/><circle cx="12" cy="16.3" r="0.9" fill="currentColor" stroke="none"/></svg>
         <span data-i18n="navDeficiencies">Mangler</span>
         <span class="nav-badge" id="deficienciesBadge" hidden>0</span>
+      </button>
+      <button class="nav-item" data-view="metronom" type="button">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 3.5h6l4 17H5z"/><line x1="12" y1="16" x2="16.5" y2="6.5"/><line x1="7.5" y1="15.5" x2="16.5" y2="15.5"/></svg>
+        <span data-i18n="navMetronome">Metronom</span>
+        <span class="nav-live-dot" id="metroNavDot" hidden></span>
       </button>
       <button class="nav-item" data-view="guide" type="button">
         <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 6.5c-1.6-1.3-3.8-2-6.5-2v13.5c2.7 0 4.9.7 6.5 2 1.6-1.3 3.8-2 6.5-2V4.5c-2.7 0-4.9.7-6.5 2z"/><line x1="12" y1="6.5" x2="12" y2="18"/></svg>
@@ -232,6 +238,50 @@
 
         <div class="deficiency-list" id="deficiencyList"></div>
         <p class="empty-state" id="deficiencyEmptyState" hidden data-i18n="deficiencyEmpty">Ingen mangler registrert.</p>
+      </section>
+
+      <!-- ---------- METRONOM ---------- -->
+      <section class="view" id="view-metronom">
+        <div class="view-head">
+          <h1 data-i18n="metroTitle">Metronom for kompresjoner</h1>
+          <p class="view-desc" data-i18n="metroDesc">Hjelper deltakerne å holde riktig takt på brystkompresjonene. Lyden fortsetter selv om skjermen låses.</p>
+        </div>
+
+        <div class="metro">
+          <div class="metro-tempos" role="radiogroup" data-i18n-aria-label="metroTempoLabel" aria-label="Takt">
+            <button class="metro-tempo" type="button" role="radio" data-bpm="100">
+              <span class="metro-tempo-num">100</span>
+              <span class="metro-tempo-unit" data-i18n="metroBpm">slag/min</span>
+            </button>
+            <button class="metro-tempo is-gold" type="button" role="radio" data-bpm="110">
+              <span class="metro-gold-badge" data-i18n="metroGold">Gullstandard</span>
+              <span class="metro-tempo-num">110</span>
+              <span class="metro-tempo-unit" data-i18n="metroBpm">slag/min</span>
+            </button>
+            <button class="metro-tempo" type="button" role="radio" data-bpm="120">
+              <span class="metro-tempo-num">120</span>
+              <span class="metro-tempo-unit" data-i18n="metroBpm">slag/min</span>
+            </button>
+          </div>
+
+          <div class="metro-stage">
+            <span class="metro-ring" id="metroRing" aria-hidden="true"></span>
+            <button class="metro-play" id="metroPlayBtn" type="button" aria-pressed="false">
+              <svg class="metro-icon-play" viewBox="0 0 24 24" width="44" height="44"><path d="M8 5.5v13l11-6.5z"/></svg>
+              <svg class="metro-icon-stop" viewBox="0 0 24 24" width="40" height="40"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+              <span class="metro-play-label" id="metroPlayLabel">Start</span>
+            </button>
+          </div>
+          <p class="metro-time" id="metroTime" aria-live="off">0:00</p>
+          <p class="metro-time-sub" id="metroTimeSub"></p>
+
+          <div class="metro-durations-wrap">
+            <p class="metro-section-label" data-i18n="metroDuration">Varighet</p>
+            <div class="metro-durations" id="metroDurations" role="radiogroup" data-i18n-aria-label="metroDuration" aria-label="Varighet"></div>
+          </div>
+
+          <p class="fine-print metro-tip" data-i18n="metroTip">Tips: Skru opp volumet på telefonen. Du kan låse skjermen mens metronomen går, og stoppe den fra låseskjermen.</p>
+        </div>
       </section>
 
       <!-- ---------- GUIDE ---------- -->

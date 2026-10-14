@@ -47,7 +47,7 @@ minutter, og du trenger ikke kunne kode.
 
 ## Slik bruker du appen
 
-Som koordinator har appen seks faner, enten i menyen til venstre (på PC)
+Som koordinator har appen sju faner, enten i menyen til venstre (på PC)
 eller nederst (på mobil):
 
 - **Oversikt** — se og oppdater hvor Mini-Anne-bagen er, og om
@@ -70,6 +70,15 @@ eller nederst (på mobil):
   spritservietter. Trykk **«Registrer mangel»**, skriv inn hva det gjelder,
   og huk av boksen når det er ordnet. Tallet ved siden av «Mangler» i menyen
   viser hvor mange uløste mangler som står igjen.
+- **Metronom** — en takt-lyd som hjelper deltakerne å holde riktig tempo
+  på brystkompresjonene. **110 slag i minuttet** er valgt fra start (merket
+  «Gullstandard»), og du kan trykke på **100** eller **120** for å
+  sammenlikne – også mens den spiller. Trykk på den store **Start**-knappen
+  for å starte og på **Stopp** for å stoppe. Under «Varighet» kan du velge
+  **«Uten stopp»** (spiller til du trykker Stopp) eller en tid fra **0:30**
+  til **3:00**; da stopper den av seg selv med et lite «ding-ding».
+  Lyden fortsetter selv om du låser skjermen på mobilen, og kan stoppes fra
+  låseskjermen. Husk å skru opp volumet.
 - **Hurtigstart** — hele HLR-guiden, delt inn i tre steg (forberedelse,
   selve opplæringen, og opprydding). Trykk på et felt for å folde det ut,
   eller på blyant-ikonet for å redigere teksten (fet/kursiv, punktlister og
